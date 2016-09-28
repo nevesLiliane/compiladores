@@ -1,5 +1,7 @@
-flex lex.l
+all: 	
+		clear
+		lex lexica.l
+		yacc -d sintatica.y
+		g++ -o glf y.tab.c -lfl
 
-bison -d yacc.y
-
-gcc -o calc yacc.tab.c lex.yy.c -lfl
+		./glf < exemplo.foca
