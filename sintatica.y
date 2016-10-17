@@ -12,8 +12,10 @@ struct atributos
 	string label;
 	string traducao;
 };
+int contador = 0;
 int yylex(void);
 void yyerror(string);
+string createvar(void);
 %}
 
 %token TK_NUM
@@ -23,13 +25,14 @@ void yyerror(string);
 %token TK_TIPO_BOOL
 %token TK_MAIN TK_ID TK_TIPO_INT
 %token TK_FIM TK_ERROR
+%token TK_COMP TK_LT TK_GT TK_LTE TK_GTE TK_DIFF
+%token TK_OR TK_AND TK_NOT TK_XOR
+%token TK_EQ TK_MOD
 
 %start S
 
-%left '+'
-%left '-'
-%left '*'
-%left '/'
+%left TK_PLUS TK_SUB
+%left TK_MULT TK_DIV
 
 %%
 
@@ -52,34 +55,74 @@ COMANDOS	: COMANDO COMANDOS
 COMANDO 	: E ';'
 			;
 
-E 			: E '+' E
+E 			: E TK_PLUS E
 			{
-				$$.label = "temp";
-				$1.label = "temp";
-				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" + "+$2.label+";\n";
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" + "+$3.label+";\n";
 			}
-			| E '-' E
+			| E TK_SUB E
 			{
-				$$.label = "temp";
-				$1.label = "temp";
-				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" - "+$2.label+";\n";
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" - "+$3.label+";\n";
 			}
-			|E '*' E
+			|E TK_MULT E
 			{
-				$$.label = "temp";
-				$1.label = "temp";
-				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" * "+$2.label+";\n";
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" * "+$3.label+";\n";
 			}
-			| E '/' E
+			| E TK_DIV E
 			{
-				$$.label = "temp";
-				$2.label = "temp";
-				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" / "+$2.label+";\n";
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" / "+$3.label+";\n";
 			}
+			| E TK_MOD E
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" % "+$3.label+";\n";
+			}
+
+			| E TK_COMP E {
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " == " + $3.label + ";\n";
+			}
+			| E TK_LT E {
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " < " + $3.label + ";\n";
+			}
+			| E TK_LTE E {
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " <= " + $3.label + ";\n";
+			}
+			| E TK_GT E {
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " > " + $3.label + ";\n";
+			}
+			| E TK_GTE E {
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " >= " + $3.label + ";\n";
+			}
+			| E TK_DIFF E {
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " != " + $3.label + ";\n";
+			}
+
+			| E TK_OR E {
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " || " + $3.label + ";\n";
+			}
+			| E TK_AND E {
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " && " + $3.label + ";\n";
+			}
+			| E TK_XOR E {
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " ^ " + $3.label + ";\n";
+			}
+
 			| TK_NUM
 			{
-				$$.label = "temp";
-				$$.traducao = "\t"+$$.label+" = " + $1.traducao + ";\n";
+				$$.label = createvar();
+				$$.traducao = "\t"+$$.label+ " = " + $1.traducao + ";\n";
 			}
 			| TK_ID
 			;
@@ -102,3 +145,10 @@ void yyerror( string MSG )
 	cout << MSG << endl;
 	exit (0);
 }			
+
+string createvar(){
+	stringstream a;
+	contador = contador + 1;
+	a << "temp" << contador;
+	return a.str();
+}

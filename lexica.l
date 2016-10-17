@@ -29,7 +29,24 @@ ID {LETRA}({LETRA}|{NUM})*
 
 [(){}[\];,]	{ return *yytext; }
 
-[+\-*/]		{ return *yytext; }
+"+"			{ return TK_PLUS; }
+"-"			{ return TK_SUB; }
+"*"			{ return TK_MULT; }
+"/"			{ return TK_DIV; }
+"="			{ return TK_EQ; }
+"%"			{ return TK_MOD; }
+
+"=="		{ return TK_COMP; }
+"<"			{ return TK_LT; }
+">"			{ return TK_GT; }
+"<="		{ return TK_LTE; }
+">="		{ return TK_GTE; }
+"!="		{ return TK_DIFF; }
+
+"&&"		{ return TK_AND; }
+"^"			{ return TK_XOR; }
+"||"		{ return TK_OR; }
+"!"			{ return TK_NOT; }
 
 {NUM}		{ yylval.traducao = yytext; return TK_NUM; }
 {ID}		{ yylval.label = yytext; return TK_ID; }
