@@ -31,6 +31,7 @@ string createvar(void);
 %token TK_OR TK_AND TK_NOT TK_XOR
 %token TK_EQ TK_MOD
 %token TK_TIPO_BOOL_TRUE TK_TIPO_BOOL_FALSE
+%token TK_SHIFT_LEFT TK_SHIFT_RIGHT
 
 %start S
 
@@ -82,7 +83,7 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 	$$.label = createvar();
 					 	$$.traducao = "\tint " + $$.label + " = " + $4.traducao + ";\n";
 					 }
-					 | TK_TIPO_INT TK_ID TK_EQ E ';'
+					 | TK_TIPO_INT TK_ID TK_EQ NUMEXP ';'
 					 {
 					 	$$.label = createvar();
 					 	$$.traducao = $4.traducao + "\tint " + $$.label + " = " + $4.label + ";\n";
@@ -92,7 +93,7 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 	$$.label = createvar();
 					 	$$.traducao = "\tfloat " + $$.label + " = " + $4.label + ";\n";
 					 }
-					 | TK_TIPO_FLOAT TK_ID TK_EQ E ';'
+					 | TK_TIPO_FLOAT TK_ID TK_EQ NUMEXP ';'
 					 {
 					 	$$.label = createvar();
 					 	$$.traducao = $4.traducao + "\tfloat " + $$.label + " = " + $4.label + ";\n";
@@ -100,12 +101,12 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 | TK_TIPO_STRING TK_ID TK_EQ TK_CHAR';'
 					 {
 					 	$$.label = createvar();
-					 	$$.traducao = "\tstring " + $$.label + " = " + $4.traducao + ";\n";
+					 	$$.traducao = "\tchar " + $$.label + " = " + $4.traducao + ";\n";
 					 }
 					 | TK_TIPO_STRING TK_ID TK_EQ  E ';'
 					 {
 					 	$$.label = createvar();
-					 	$$.traducao = $4.traducao + "\tstring " + $$.label + " = " + $4.label + ";\n";
+					 	$$.traducao = $4.traducao + "\tchar " + $$.label + " = " + $4.label + ";\n";
 					 }
 					 | TK_TIPO_BOOL TK_ID TK_EQ  TK_TIPO_BOOL_TRUE';'
 					 {
@@ -117,24 +118,39 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 	$$.label = createvar();
 					 	$$.traducao = "\tint " + $$.label + " = 0;\n";
 					 }
-					 | TK_TIPO_BOOL TK_ID TK_EQ  E ';'
+					 | TK_TIPO_BOOL TK_ID TK_EQ  BOOLEANEXP ';'
 					 {
 					 	$$.label = createvar();
 					 	$$.traducao = $4.traducao + "\tint " + $$.label + " = " + $4.label + ";\n";
 					 }
 					 ;
 
-ATRIBUICAO	: TK_ID '=' TK_NUM ';'
+ATRIBUICAO	: TK_ID TK_EQ TK_NUM ';'
 			 {
 			 	$$.label = createvar();
 			 	$$.traducao = $1.traducao + " = " + $3.traducao + ";\n";
 			 }
-			| TK_ID '='  E
-			| TK_ID '=' TK_NUM '.' TK_NUM';'
-			| TK_ID '='  TK_CHAR';'
+			| TK_ID TK_EQ E
+			{
+				$$.label = createvar();
+			 	$$.traducao = $3.traducao + "\t" + $1.traducao + " = " + $3.label + ";\n";
+			}
+			| TK_ID TK_EQ TK_REAL ';'
+			{
+				$$.label = createvar();
+			 	$$.traducao = $1.traducao + " = " + $3.traducao + ";\n";
+			}
+			| TK_ID TK_EQ TK_CHAR';'
+			{
+				$$.label = createvar();
+			 	$$.traducao = $1.traducao + " = " + $3.traducao + ";\n";
+			}
 			;
 
 COMANDOS	: COMANDO COMANDOS
+			{
+				$$.traducao = $1.traducao + $2.traducao;
+			}
 			|
 			;
 
@@ -143,81 +159,171 @@ COMANDO 	: E ';'
 			| ATRIBUICAO
 			;
 
-E 			: E TK_PLUS E
-			{
-				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" + "+$3.label+";\n";
-			}
-			| E TK_SUB E
-			{
-				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" - "+$3.label+";\n";
-			}
-			|E TK_MULT E
-			{
-				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" * "+$3.label+";\n";
-			}
-			| E TK_DIV E
-			{
-				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" / "+$3.label+";\n";
-			}
-			| E TK_MOD E
-			{
-				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" % "+$3.label+";\n";
-			}
+E 			: NUMEXP
+			| CHAREXP
+			| BOOLEANEXP
+			;
 
-			| E TK_COMP E {
-				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " == " + $3.label + ";\n";
-			}
-			| E TK_LT E {
-				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " < " + $3.label + ";\n";
-			}
-			| E TK_LTE E {
-				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " <= " + $3.label + ";\n";
-			}
-			| E TK_GT E {
-				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " > " + $3.label + ";\n";
-			}
-			| E TK_GTE E {
-				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " >= " + $3.label + ";\n";
-			}
-			| E TK_DIFF E {
-				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " != " + $3.label + ";\n";
-			}
 
-			| E TK_OR E {
-				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " || " + $3.label + ";\n";
-			}
-			| E TK_AND E {
-				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " && " + $3.label + ";\n";
-			}
-			| E TK_XOR E {
-				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " ^ " + $3.label + ";\n";
-			}
-			| TK_REAL
+NUMBER		: TK_REAL
 			{
 				$$.label = createvar();
-				$$.traducao = "\t"+ $$.label+ " = " + $1.traducao + ";\n";
+				$$.traducao = "\tfloat "+ $$.label+ " = " + $1.traducao + ";\n";
 			}
 			| TK_NUM
 			{
 				$$.label = createvar();
+				$$.traducao = "\tint "+ $$.label+ " = " + $1.traducao + ";\n";
+			}
+			;
+
+BOOLEANEXP	: '(' BOOLEANEXP ')' 
+			{
+				$$.label = createvar();
+				$$.traducao = $2.traducao + "\tint " + $$.label + " = " + $2.label + ";\n";
+			}
+			| BOOLEANEXP TK_OR BOOLEANEXP 
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label + " = " + $1.label + " || " + $3.label + ";\n";
+			}
+			| BOOLEANEXP TK_AND BOOLEANEXP 
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label + " = " + $1.label + " && " + $3.label + ";\n";
+			}
+			| TK_NOT TK_ID 
+			{
+				$$.label = createvar();
+				$$.traducao = "\tint " + $$.label + " = " + $1.traducao + " == 0;\n";
+			}
+			| TK_NOT BOOLEANTYPE 
+			{
+				$$.label = createvar();
+				$$.traducao = $2.traducao + "\tint " + $$.label + " = " + $2.label + " == 0;\n";
+			}
+			| TK_NOT '(' BOOLEANEXP ')' 
+			{
+				$$.label = createvar();
+				$$.traducao = $3.traducao + "\tint " + $$.label + " = " + $3.label + " == 0;\n";
+			}
+			| LOGICALEXP
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + "\tint " + $$.label + " = " + $1.label + ";\n";
+			}
+			| BOOLEANTYPE
+			| OUTROS
+			;
+
+BOOLEANTYPE : TK_TIPO_BOOL_TRUE
+			{
+				$$.label = createvar();
+				$$.traducao = "\tint "+ $$.label+ " = 1;\n";
+			}
+			| TK_TIPO_BOOL_FALSE
+			{
+				$$.label = createvar();
+				$$.traducao = "\tint "+ $$.label+ " = 0;\n";
+			}
+
+LOGICALEXP	: '(' LOGICALEXP ')' 
+			{
+				$$.label = createvar();
+				$$.traducao = $2.traducao + "\tint " + $$.label + " = " + $2.label + ";\n";
+			}
+			| NUMEXP TK_COMP NUMEXP 
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label + " = " + $1.label + " == " + $3.label + ";\n";
+			}
+			| NUMEXP TK_DIFF NUMEXP 
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label + " = " + $1.label + " != " + $3.label + ";\n";
+			}
+			| NUMEXP TK_LT NUMEXP 
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label + " = " + $1.label + " < " + $3.label + ";\n";
+			}
+			| NUMEXP TK_LTE NUMEXP 
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label + " = " + $1.label + " <= " + $3.label + ";\n";
+			}
+			| NUMEXP TK_GT NUMEXP 
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label + " = " + $1.label + " > " + $3.label + ";\n";
+			}
+			| NUMEXP TK_GTE NUMEXP 
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label + " = " + $1.label + " >= " + $3.label + ";\n";
+			}
+			| OUTROS
+			;
+
+
+NUMEXP		: '(' NUMEXP ')'
+			{
+				$$.label = createvar();
+				$$.traducao = $2.traducao + "\t" + $$.label + " = " + $2.label + ";\n";
+			}
+			| NUMEXP TK_PLUS NUMEXP
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" + "+$3.label+";\n";
+			}
+			| NUMEXP TK_SUB NUMEXP
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" - "+$3.label+";\n";
+			}
+			| NUMEXP TK_MULT NUMEXP
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" * "+$3.label+";\n";
+			}
+			| NUMEXP TK_DIV NUMEXP
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" / "+$3.label+";\n";
+			}
+			| NUMEXP TK_MOD NUMEXP
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" % "+$3.label+";\n";
+			}
+			| NUMEXP TK_XOR NUMEXP 
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " ^ " + $3.label + ";\n";
+			}
+			| NUMEXP TK_SHIFT_LEFT NUMEXP 
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " << " + $3.label + ";\n";
+			}
+			| NUMEXP TK_SHIFT_RIGHT NUMEXP 
+			{
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " >> " + $3.label + ";\n";
+			}
+			| NUMBER
+			| OUTROS
+			;
+
+CHAREXP		: TK_CHAR
+			{
+				$$.label = createvar();
 				$$.traducao = "\t"+ $$.label+ " = " + $1.traducao + ";\n";
 			}
-			| TK_ID
-			| TK_CHAR
+			| OUTROS
+			;
+
+OUTROS		: TK_ID
 			;
 
 %%

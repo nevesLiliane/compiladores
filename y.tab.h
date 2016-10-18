@@ -71,10 +71,12 @@ extern int yydebug;
     TK_MOD = 281,
     TK_TIPO_BOOL_TRUE = 282,
     TK_TIPO_BOOL_FALSE = 283,
-    TK_PLUS = 284,
-    TK_SUB = 285,
-    TK_MULT = 286,
-    TK_DIV = 287
+    TK_SHIFT_LEFT = 284,
+    TK_SHIFT_RIGHT = 285,
+    TK_PLUS = 286,
+    TK_SUB = 287,
+    TK_MULT = 288,
+    TK_DIV = 289
   };
 #endif
 /* Tokens.  */
@@ -104,10 +106,12 @@ extern int yydebug;
 #define TK_MOD 281
 #define TK_TIPO_BOOL_TRUE 282
 #define TK_TIPO_BOOL_FALSE 283
-#define TK_PLUS 284
-#define TK_SUB 285
-#define TK_MULT 286
-#define TK_DIV 287
+#define TK_SHIFT_LEFT 284
+#define TK_SHIFT_RIGHT 285
+#define TK_PLUS 286
+#define TK_SUB 287
+#define TK_MULT 288
+#define TK_DIV 289
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
