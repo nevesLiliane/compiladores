@@ -19,6 +19,7 @@ string createvar(void);
 %}
 
 %token TK_NUM
+%token TK_CHAR
 %token TK_TIPO_FLOAT
 %token TK_TIPO_DOUBLE
 %token TK_TIPO_STRING
@@ -47,7 +48,16 @@ BLOCO		: '{' COMANDOS '}'
 				$$.traducao = $2.traducao;
 			}
 			;
-
+DECLARACAO	: TK_TIPO_INT TK_ID ';'
+			| TK_TIPO_INT TK_ID '=' TK_NUM ';'
+			| TK_TIPO_INT TK_ID '='  COMANDO
+			| TK_TIPO_FLOAT TK_ID ';'
+			| TK_TIPO_FLOAT TK_ID '=' TK_NUM '.' TK_NUM';'
+			| TK_TIPO_FLOAT TK_ID '='  COMANDO
+			| TK_TIPO_STRING TK_ID ';'
+			| TK_TIPO_STRING TK_ID '='  TK_CHAR';'
+			| TK_TIPO_STRING TK_ID '='  COMANDO
+			;
 COMANDOS	: COMANDO COMANDOS
 			|
 			;
@@ -125,6 +135,7 @@ E 			: E TK_PLUS E
 				$$.traducao = "\t"+$$.label+ " = " + $1.traducao + ";\n";
 			}
 			| TK_ID
+			| TK_CHAR
 			;
 
 %%

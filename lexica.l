@@ -50,6 +50,7 @@ ID {LETRA}({LETRA}|{NUM})*
 
 {NUM}		{ yylval.traducao = yytext; return TK_NUM; }
 {ID}		{ yylval.label = yytext; return TK_ID; }
+{CHAR}		{ yylval.label = yytext; return TK_CHAR; }
 
 .			{ *yytext; }
 
