@@ -20,6 +20,7 @@ string createvar(void);
 
 %token TK_NUM
 %token TK_CHAR
+%token TK_REAL
 %token TK_TIPO_FLOAT
 %token TK_TIPO_DOUBLE
 %token TK_TIPO_STRING
@@ -29,6 +30,7 @@ string createvar(void);
 %token TK_COMP TK_LT TK_GT TK_LTE TK_GTE TK_DIFF
 %token TK_OR TK_AND TK_NOT TK_XOR
 %token TK_EQ TK_MOD
+%token TK_TIPO_BOOL_TRUE TK_TIPO_BOOL_FALSE
 
 %start S
 
@@ -48,21 +50,97 @@ BLOCO		: '{' COMANDOS '}'
 				$$.traducao = $2.traducao;
 			}
 			;
-DECLARACAO	: TK_TIPO_INT TK_ID ';'
-			| TK_TIPO_INT TK_ID '=' TK_NUM ';'
-			| TK_TIPO_INT TK_ID '='  COMANDO
-			| TK_TIPO_FLOAT TK_ID ';'
-			| TK_TIPO_FLOAT TK_ID '=' TK_NUM '.' TK_NUM';'
-			| TK_TIPO_FLOAT TK_ID '='  COMANDO
-			| TK_TIPO_STRING TK_ID ';'
-			| TK_TIPO_STRING TK_ID '='  TK_CHAR';'
-			| TK_TIPO_STRING TK_ID '='  COMANDO
+
+DECLARACAO	: DECLARACAOSIMPLES
+			| DECLARACAOATRIBUICAO
 			;
+
+DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
+				  {
+						$$.label = createvar();
+						$$.traducao = "\tint " + $$.label + ";\n";
+				  }
+				  | TK_TIPO_FLOAT TK_ID ';'
+				  {
+						$$.label = createvar();
+						$$.traducao = "\tfloat " + $$.label + ";\n";
+				  }
+				  | TK_TIPO_STRING TK_ID ';'
+				  {
+						$$.label = createvar();
+						$$.traducao = "\tstring " + $$.label + ";\n";
+				  }
+				  | TK_TIPO_BOOL TK_ID ';'
+				  {
+						$$.label = createvar();
+						$$.traducao = "\tboolean " + $$.label + ";\n";
+				  }
+				  ;
+
+DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
+					 {
+					 	$$.label = createvar();
+					 	$$.traducao = "\tint " + $$.label + " = " + $4.traducao + ";\n";
+					 }
+					 | TK_TIPO_INT TK_ID TK_EQ E ';'
+					 {
+					 	$$.label = createvar();
+					 	$$.traducao = $4.traducao + "\tint " + $$.label + " = " + $4.label + ";\n";
+					 }
+					 | TK_TIPO_FLOAT TK_ID TK_EQ TK_REAL ';'
+					 {
+					 	$$.label = createvar();
+					 	$$.traducao = "\tfloat " + $$.label + " = " + $4.label + ";\n";
+					 }
+					 | TK_TIPO_FLOAT TK_ID TK_EQ E ';'
+					 {
+					 	$$.label = createvar();
+					 	$$.traducao = $4.traducao + "\tfloat " + $$.label + " = " + $4.label + ";\n";
+					 }
+					 | TK_TIPO_STRING TK_ID TK_EQ TK_CHAR';'
+					 {
+					 	$$.label = createvar();
+					 	$$.traducao = "\tstring " + $$.label + " = " + $4.traducao + ";\n";
+					 }
+					 | TK_TIPO_STRING TK_ID TK_EQ  E ';'
+					 {
+					 	$$.label = createvar();
+					 	$$.traducao = $4.traducao + "\tstring " + $$.label + " = " + $4.label + ";\n";
+					 }
+					 | TK_TIPO_BOOL TK_ID TK_EQ  TK_TIPO_BOOL_TRUE';'
+					 {
+					 	$$.label = createvar();
+					 	$$.traducao = "\tint " + $$.label + " = 1;\n";
+					 }
+					 | TK_TIPO_BOOL TK_ID TK_EQ  TK_TIPO_BOOL_FALSE ';'
+					 {
+					 	$$.label = createvar();
+					 	$$.traducao = "\tint " + $$.label + " = 0;\n";
+					 }
+					 | TK_TIPO_BOOL TK_ID TK_EQ  E ';'
+					 {
+					 	$$.label = createvar();
+					 	$$.traducao = $4.traducao + "\tint " + $$.label + " = " + $4.label + ";\n";
+					 }
+					 ;
+
+ATRIBUICAO	: TK_ID '=' TK_NUM ';'
+			 {
+			 	$$.label = createvar();
+			 	$$.traducao = $1.traducao + " = " + $3.traducao + ";\n";
+			 }
+			| TK_ID '='  E
+			| TK_ID '=' TK_NUM '.' TK_NUM';'
+			| TK_ID '='  TK_CHAR';'
+			;
+
 COMANDOS	: COMANDO COMANDOS
 			|
 			;
 
 COMANDO 	: E ';'
+			| DECLARACAO
+			| ATRIBUICAO
 			;
 
 E 			: E TK_PLUS E
@@ -128,11 +206,15 @@ E 			: E TK_PLUS E
 				$$.label = createvar();
 				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " ^ " + $3.label + ";\n";
 			}
-
+			| TK_REAL
+			{
+				$$.label = createvar();
+				$$.traducao = "\t"+ $$.label+ " = " + $1.traducao + ";\n";
+			}
 			| TK_NUM
 			{
 				$$.label = createvar();
-				$$.traducao = "\t"+$$.label+ " = " + $1.traducao + ";\n";
+				$$.traducao = "\t"+ $$.label+ " = " + $1.traducao + ";\n";
 			}
 			| TK_ID
 			| TK_CHAR
