@@ -2,6 +2,7 @@
 #include <iostream>
 #include <string>
 #include <sstream>
+#include <fstream>
 #include <map>
 
 #define YYSTYPE atributos
@@ -167,7 +168,7 @@ ATRIBUICAO	: TK_ID TK_EQ TK_NUM ';'
 CAST 		: '(' TIPO ')' TK_ID ';'
 			{
 				string nome_variavel_temporaria_cast;
-				string chave = gera_chave($2.label, $4.tipo, "=");
+				string chave = gera_chave($2.traducao, $4.tipo, "=");
 				if (mapa_cast.find(chave) != mapa_cast.end()) {
 					tipo_cast cast = mapa_cast[chave];
 					nome_variavel_temporaria_cast = createvar();
@@ -176,32 +177,32 @@ CAST 		: '(' TIPO ')' TK_ID ';'
 					$$.tamanho = $4.tamanho;
 					$$.label = nome_variavel_temporaria_cast;
 				}
-			};
+			}
+			| ;
 
 TIPO 		: TK_TIPO_INT
 			{
 				$$.label = $1.label;
 				$$.traducao = $1.traducao;
+				$$.tipo = "int";
 			}
 			| TK_TIPO_FLOAT
 			{
 				$$.label = $1.label;
 				$$.traducao = $1.traducao;
+				$$.tipo = "float";
 			}
 			| TK_TIPO_BOOL
 			{
 				$$.label = $1.label;
 				$$.traducao = $1.traducao;
-			}
-			| TK_TIPO_DOUBLE
-			{
-				$$.label = $1.label;
-				$$.traducao = $1.traducao;
+				$$.tipo = "boolean";
 			}
 			| TK_TIPO_STRING
 			{
 				$$.label = $1.label;
 				$$.traducao = $1.traducao;
+				$$.tipo = "char";
 			};
 
 COMANDOS	: COMANDO COMANDOS
@@ -219,6 +220,7 @@ COMANDO 	: E ';'
 E 			: NUMEXP
 			| CHAREXP
 			| BOOLEANEXP
+			| CAST
 			;
 
 
@@ -226,11 +228,13 @@ NUMBER		: TK_REAL
 			{
 				$$.label = createvar();
 				$$.traducao = "\tfloat "+ $$.label+ " = " + $1.traducao + ";\n";
+				$$.tipo = "float";
 			}
 			| TK_NUM
 			{
 				$$.label = createvar();
 				$$.traducao = "\tint "+ $$.label+ " = " + $1.traducao + ";\n";
+				$$.tipo = "int";
 			}
 			;
 
@@ -325,47 +329,71 @@ LOGICALEXP	: '(' LOGICALEXP ')'
 NUMEXP		: '(' NUMEXP ')'
 			{
 				$$.label = createvar();
-				$$.traducao = $2.traducao + "\t" + $$.label + " = " + $2.label + ";\n";
+				$$.tipo = $2.tipo;
+				$$.traducao = $2.traducao + "\t" + $2.tipo + " " + $$.label + " = " + $2.label + ";\n";
 			}
-			| NUMEXP TK_PLUS NUMEXP
+			| '(' TIPO ')' NUMEXP
 			{
 				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" + "+$3.label+";\n";
+				$$.tipo = $2.tipo;
+				cout << "Tipo 1 = '" << $2.tipo << "'' e Tipo 3 = '" << $4.tipo <<"'\n";
+				$$.traducao = $4.traducao + "\t" + $$.tipo + " " + $$.label + " = " + $4.label + ";\n";
+			} 
+			| NUMEXP TK_PLUS NUMEXP
+			{
+				//Gerando o tipo de cast a partir dos numeros da operação
+				$$.tipo = mapa_cast[gera_chave($1.tipo, $3.tipo, "+")].resultado;
+				$$.label = createvar();
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.tipo + " " + $$.label + " = "+$1.label+" + "+$3.label+";\n";
 			}
 			| NUMEXP TK_SUB NUMEXP
 			{
+				//Gerando o tipo de cast a partir dos numeros da operação
+				$$.tipo = mapa_cast[gera_chave($1.tipo, $3.tipo, "-")].resultado;
 				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" - "+$3.label+";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.tipo + " " + $$.label+" = "+$1.label+" - "+$3.label+";\n";
 			}
 			| NUMEXP TK_MULT NUMEXP
 			{
+				//Gerando o tipo de cast a partir dos numeros da operação
+				$$.tipo = mapa_cast[gera_chave($1.tipo, $3.tipo, "*")].resultado;
 				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" * "+$3.label+";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.tipo + " " + $$.label+" = "+$1.label+" * "+$3.label+";\n";
 			}
 			| NUMEXP TK_DIV NUMEXP
 			{
+				//Gerando o tipo de cast a partir dos numeros da operação
+				$$.tipo = mapa_cast[gera_chave($1.tipo, $3.tipo, "/")].resultado;
 				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" / "+$3.label+";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.tipo + " " + $$.label + " = "+$1.label+" / "+$3.label+";\n";
 			}
 			| NUMEXP TK_MOD NUMEXP
 			{
+				//Gerando o tipo de cast a partir dos numeros da operação
+				$$.tipo = mapa_cast[gera_chave($1.tipo, $3.tipo, "%")].resultado;
 				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + "\t"+$$.label+" = "+$1.label+" % "+$3.label+";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.tipo + " " + $$.label+" = "+$1.label+" % "+$3.label+";\n";
 			}
 			| NUMEXP TK_XOR NUMEXP 
 			{
+				//Gerando o tipo de cast a partir dos numeros da operação
+				$$.tipo = mapa_cast[gera_chave($1.tipo, $3.tipo, "^")].resultado;
 				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " ^ " + $3.label + ";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.tipo + " " + $$.label + " = " + $1.label + " ^ " + $3.label + ";\n";
 			}
 			| NUMEXP TK_SHIFT_LEFT NUMEXP 
 			{
+				//Gerando o tipo de cast a partir dos numeros da operação
+				$$.tipo = mapa_cast[gera_chave($1.tipo, $3.tipo, "<<")].resultado;
 				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " << " + $3.label + ";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.tipo + " " + $$.label + " = " + $1.label + " << " + $3.label + ";\n";
 			}
 			| NUMEXP TK_SHIFT_RIGHT NUMEXP 
 			{
+				//Gerando o tipo de cast a partir dos numeros da operação
+				$$.tipo = mapa_cast[gera_chave($1.tipo, $3.tipo, ">>")].resultado;
 				$$.label = createvar();
-				$$.traducao = $1.traducao + $3.traducao + $$.label + " = " + $1.label + " >> " + $3.label + ";\n";
+				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.tipo + " " + $$.label + " = " + $1.label + " >> " + $3.label + ";\n";
 			}
 			| NUMBER
 			;
@@ -386,6 +414,7 @@ int yyparse();
 
 int main( int argc, char* argv[] )
 {
+	gera_mapa_cast();
 	yyparse();
 
 	return 0;
@@ -405,21 +434,14 @@ string createvar(){
 }
 
 void gera_mapa_cast() {
-	FILE* file = fopen("./src/mapa_cast.txt", "r");
-	char operador1[20] = "";
-	char operador2[20] = "";
-	char operacao[3] = "";
-	char resultado[20] = "";
+	std::fstream file("mapa_cast.txt", std::ios_base::in);
+	string operador1, operador2, operacao, resultado;
 	int operando_cast;
-	while(fscanf(file, "%s\t%s\t%s\t%s\t%d\n", operador1, operacao, operador2, resultado, &operando_cast)) {
+
+	while(file >> operador1 >> operacao >> operador2 >> resultado >> operando_cast) {
 		tipo_cast cast = {resultado, operando_cast};
 		mapa_cast[gera_chave(operador1, operador2, operacao)] = cast;
-		//cout << operador1 << " " << operador2 << " " << operacao;
-		if(feof(file)) {
-			break;
-		}
 	}
-	fclose(file);
 }
 
 string gera_chave(string operador1, string operador2, string operacao) {
