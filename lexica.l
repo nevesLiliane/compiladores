@@ -53,6 +53,10 @@ ID {LETRA}({LETRA}|{NUM})*
 "<<"		{ return TK_SHIFT_LEFT; }
 ">>"		{ return TK_SHIFT_RIGHT; }
 
+"if"		{ return TK_IF; }
+"else"		{ return TK_ELSE; }
+"while"		{ return TK_WHILE; }
+
 {NUM}		{ yylval.traducao = yytext; return TK_NUM; }
 {ID}		{ yylval.label = yytext; return TK_ID; }
 {CHAR}		{ yylval.label = yytext; return TK_CHAR; }

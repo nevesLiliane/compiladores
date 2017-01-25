@@ -4,6 +4,7 @@
 #include <sstream>
 #include <fstream>
 #include <map>
+#include <stack> 
 
 #define YYSTYPE atributos
 
@@ -15,6 +16,9 @@ struct atributos
 	string traducao;
 	string tipo;
 	string tamanho;
+	string jump;
+	string blocoIni;
+	string blocoFim;
 };
 
 //Estrutura que guarda informações sobre o cast a ser feito
@@ -25,7 +29,9 @@ typedef struct _tipo_cast
 } tipo_cast;
 // Mapa de casts
 map<string, tipo_cast> mapa_cast;
+stack< map<string,atributos> > escopo;
 int contador = 0;
+int numBloco = 0;
 int yylex(void);
 void yyerror(string);
 string createvar(void);
@@ -33,6 +39,15 @@ string createvar(void);
 // Função para geração do mapa de cast
 void gera_mapa_cast();
 string gera_chave(string operador1, string operador2, string operacao);
+
+//Funções para escopo
+void abrirEscopo();
+void fecharEscopo();
+bool varNoEscopo(string varName);
+string gerarBloco();
+string gerarInicioDeBloco(string l);
+string gerarFimDeBloco(string l);
+
 %}
 
 %token TK_NUM
@@ -49,6 +64,7 @@ string gera_chave(string operador1, string operador2, string operacao);
 %token TK_EQ TK_MOD
 %token TK_TIPO_BOOL_TRUE TK_TIPO_BOOL_FALSE
 %token TK_SHIFT_LEFT TK_SHIFT_RIGHT
+%token TK_IF TK_ELSE TK_WHILE
 
 %start S
 
@@ -63,11 +79,22 @@ S 			: TK_TIPO_INT TK_MAIN '(' ')' BLOCO
 			}
 			;
 
-BLOCO		: '{' COMANDOS '}'
+BLOCO		: ESCOPO_INI COMANDOS ESCOPO_FIM
 			{
 				$$.traducao = $2.traducao;
 			}
 			;
+ESCOPO_INI	: '{'
+			{
+				abrirEscopo();
+				$$.traducao = "";
+			};
+
+ESCOPO_FIM	: '}'
+			{
+				fecharEscopo();
+				$$.traducao = "";
+			};
 
 DECLARACAO	: DECLARACAOSIMPLES
 			| DECLARACAOATRIBUICAO
@@ -75,12 +102,30 @@ DECLARACAO	: DECLARACAOSIMPLES
 
 DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
 				  {
-						$$.label = createvar();
+				  		map<string,atributos> mapa = escopo.top();
+				  		if(varNoEscopo($2.label) == false){
+				  			mapa[$2.label].label = createvar();
+				  			mapa[$2.label].tipo = "int"; 
+				  		}
+
+				  		$$.tipo = mapa[$2.label].tipo;
+						$2.label = mapa[$2.label].label;
+
+						$$.label =  $2.label;
 						$$.traducao = "\tint " + $$.label + ";\n";
 				  }
 				  | TK_TIPO_FLOAT TK_ID ';'
 				  {
-						$$.label = createvar();
+				  		map<string,atributos> mapa = escopo.top();
+				  		if(varNoEscopo($2.label) == false){
+				  			mapa[$2.label].label = createvar();
+				  			mapa[$2.label].tipo = "int"; 
+				  		}
+
+				  		$$.tipo = mapa[$2.label].tipo;
+						$2.label = mapa[$2.label].label;
+
+						$$.label =  $2.label;
 						$$.traducao = "\tfloat " + $$.label + ";\n";
 				  }
 				  | TK_TIPO_STRING TK_ID ';'
@@ -90,8 +135,17 @@ DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
 				  }
 				  | TK_TIPO_BOOL TK_ID ';'
 				  {
-						$$.label = createvar();
-						$$.traducao = "\tboolean " + $$.label + ";\n";
+				  		map<string,atributos> mapa = escopo.top();
+				  		if(varNoEscopo($2.label) == false){
+				  			mapa[$2.label].label = createvar();
+				  			mapa[$2.label].tipo = "int"; 
+				  		}
+
+				  		$$.tipo = mapa[$2.label].tipo;
+						$2.label = mapa[$2.label].label;
+
+						$$.label =  $2.label;
+						$$.traducao = "\tint " + $$.label + ";\n";
 				  }
 				  ;
 
@@ -150,7 +204,7 @@ ATRIBUICAO	: TK_ID TK_EQ TK_NUM ';'
 			| TK_ID TK_EQ E
 			{
 				$$.label = createvar();
-			 	$$.traducao = $3.traducao + "\t" + $1.traducao + " = " + $3.label + ";\n";
+			 	$$.traducao = $3.traducao + "\t" + $1.label + " = " + $3.label + ";\n";
 			}
 			| TK_ID TK_EQ TK_REAL ';'
 			{
@@ -215,6 +269,8 @@ COMANDOS	: COMANDO COMANDOS
 COMANDO 	: E ';'
 			| DECLARACAO
 			| ATRIBUICAO
+			| IF
+			| WHILE
 			;
 
 E 			: NUMEXP
@@ -223,6 +279,57 @@ E 			: NUMEXP
 			| CAST
 			;
 
+IF 			: TK_IF '(' BOOLEANEXP ')' BLOCO
+			{
+				$$.jump = gerarBloco();
+				$$.blocoIni = gerarInicioDeBloco($$.jump);
+				$$.blocoFim = gerarFimDeBloco($$.jump);
+				//Se condição for false, usar goto para pular o bloco inteiro de $5
+			    $$.traducao = $3.traducao + "\n\tif (" + $3.label +" == 0) goto " + $$.blocoFim + ";\n" 
+			    + $5.traducao + "\t" + $$.blocoFim + ":\n";
+			}
+			| TK_IF '(' BOOLEANEXP ')' BLOCO ELSE
+			{
+				$$.jump = gerarBloco();
+				$$.blocoIni = gerarInicioDeBloco($$.jump);
+				$$.blocoFim = gerarFimDeBloco($$.jump);
+			    $$.traducao= "\n" + $3.traducao + 
+					 "\n\t" + "if(" + $3.label + " == 0) goto " + $6.blocoIni + ";\n" + 
+					 $5.traducao + 
+					 "\tgoto " + $6.blocoFim +";\n" +
+					 $6.traducao + 
+					 "\n\t" + $6.blocoFim + ":\n";	
+			}
+			;
+
+ELSE        : TK_ELSE BLOCO
+			{
+				
+				$$.jump = gerarBloco();
+				$$.blocoIni = gerarInicioDeBloco($$.jump);
+				$$.blocoFim = gerarFimDeBloco($$.jump);
+				$$.traducao = "\n\t" + $$.blocoIni + ":\n" + $2.traducao;
+			}
+			| TK_ELSE IF
+			{
+				$$.jump = gerarBloco();
+				$$.blocoIni = gerarInicioDeBloco($$.jump);
+				$$.blocoFim = gerarFimDeBloco($$.jump);
+				
+				$$.traducao = "\n\t" + $$.blocoIni + ":\n" +
+							  $2.traducao;
+			}
+			;
+
+WHILE 		: TK_WHILE '(' BOOLEANEXP ')' BLOCO
+			{
+				$$.jump = gerarBloco();
+				$$.blocoIni = gerarInicioDeBloco($$.jump);
+				$$.blocoFim = gerarFimDeBloco($$.jump);
+			    $$.traducao = $3.traducao + "\n\t" + $$.blocoIni + ":\n\tif (" + $3.label +" == 0) goto " + $$.blocoFim + ";\n" 
+			    + $5.traducao + "\n\tgoto " + $$.blocoIni + ";\n\t" + $$.blocoFim + ":\n";
+			}
+			;
 
 NUMBER		: TK_REAL
 			{
@@ -336,7 +443,6 @@ NUMEXP		: '(' NUMEXP ')'
 			{
 				$$.label = createvar();
 				$$.tipo = $2.tipo;
-				cout << "Tipo 1 = '" << $2.tipo << "'' e Tipo 3 = '" << $4.tipo <<"'\n";
 				$$.traducao = $4.traducao + "\t" + $$.tipo + " " + $$.label + " = " + $4.label + ";\n";
 			} 
 			| NUMEXP TK_PLUS NUMEXP
@@ -446,4 +552,41 @@ void gera_mapa_cast() {
 
 string gera_chave(string operador1, string operador2, string operacao) {
 	return operador1 + "_" + operacao + "_" + operador2;
+}
+
+void abrirEscopo(){
+	map<string,atributos> novoEscopo;
+	escopo.push(novoEscopo);
+}
+
+void fecharEscopo(){
+	escopo.pop();
+}
+
+bool varNoEscopo(string varName){
+	map<string,atributos> mapa = escopo.top();
+
+	return mapa.find(varName) != mapa.end();
+}
+
+string gerarBloco()
+{
+	stringstream label;
+	label << "Bloco" << numBloco++;
+	
+	return label.str();
+}
+string gerarInicioDeBloco(string l)
+{
+	stringstream label;
+	label << "blocoIni" << l;
+	
+	return label.str();
+}
+string gerarFimDeBloco(string l)
+{
+	stringstream label;
+	label << "blocoFim" << l;
+	
+	return label.str();
 }
