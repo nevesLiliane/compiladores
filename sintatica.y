@@ -31,6 +31,7 @@ typedef struct _tipo_cast
 // Mapa de casts
 map<string, tipo_cast> mapa_cast;
 list < map<string,atributos>* > escopo;
+list<atributos*> estruturasDeRepeticao;
 int contador = 0;
 int numBloco = 0;
 int yylex(void);
@@ -66,7 +67,7 @@ string gerarFimDeBloco(string l);
 %token TK_EQ TK_MOD
 %token TK_TIPO_BOOL_TRUE TK_TIPO_BOOL_FALSE
 %token TK_SHIFT_LEFT TK_SHIFT_RIGHT
-%token TK_IF TK_ELSE TK_WHILE TK_DO
+%token TK_IF TK_ELSE TK_WHILE TK_DO TK_FOR TK_BREAK TK_CONTINUE
 
 %start S
 
@@ -77,7 +78,7 @@ string gerarFimDeBloco(string l);
 
 S 			: ESCOPO_GLOBAL FUNC_MAIN
 			{
-
+				$$.traducao = $1.traducao;
 			}
 			;
 
@@ -281,7 +282,7 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 }
 					 ;
 
-ATRIBUICAO	: TK_ID TK_EQ NUMBER ';'
+ATRIBUICAO	: TK_ID TK_EQ NUMBER
 			 {
 			 	//Verificando se a variavel existe no escopo corrente
 				$$.label = createvar();
@@ -325,7 +326,7 @@ ATRIBUICAO	: TK_ID TK_EQ NUMBER ';'
 			 	
 			 	$$.traducao = $3.traducao + "\n\t" + varDeclarada->label + " = (" + tipoAtual + ") " + $3.label + ";\n";
 			}
-			| TK_ID TK_EQ TK_REAL ';'
+			| TK_ID TK_EQ TK_REAL
 			{
 				$$.label = createvar();
 
@@ -346,7 +347,7 @@ ATRIBUICAO	: TK_ID TK_EQ NUMBER ';'
 
 			 	$$.traducao = $1.traducao + " = (" + tipoAtual + ")" + $3.traducao + ";\n";
 			}
-			| TK_ID TK_EQ TK_CHAR';'
+			| TK_ID TK_EQ TK_CHAR
 			{
 				$$.label = createvar();
 
@@ -361,10 +362,10 @@ ATRIBUICAO	: TK_ID TK_EQ NUMBER ';'
 
 			 	$$.traducao = $1.traducao + " = '" + $3.traducao + "';\n";
 			}
-			| TK_ID TK_EQ CAST ';'
+			| TK_ID TK_EQ CAST
 			;
 
-CAST 		: '(' TIPO ')' TK_ID ';'
+CAST 		: '(' TIPO ')' TK_ID
 			{
 				string nome_variavel_temporaria_cast;
 				string chave = gera_chave($2.traducao, $4.tipo, "=");
@@ -377,7 +378,11 @@ CAST 		: '(' TIPO ')' TK_ID ';'
 					$$.label = nome_variavel_temporaria_cast;
 				}
 			}
-			| ;
+			|
+			{
+				$$.traducao = "";
+			}
+			;
 
 TIPO 		: TK_TIPO_INT
 			{
@@ -409,14 +414,20 @@ COMANDOS	: COMANDO COMANDOS
 				$$.traducao = $1.traducao + $2.traducao;
 			}
 			|
+			{
+				$$.traducao = "";
+			}
 			;
 
 COMANDO 	: E ';'
 			| DECLARACAO
-			| ATRIBUICAO
+			| ATRIBUICAO ';'
 			| IF
 			| WHILE
 			| DO
+			| FOR
+			| BREAK
+			| CONTINUE
 			;
 
 E 			: NUMEXP
@@ -481,25 +492,97 @@ ELSE        : TK_ELSE BLOCO
 			}
 			;
 
-WHILE 		: TK_WHILE '(' BOOLEANEXP ')' BLOCO
+WHILE 		: WHILE_LABEL '(' BOOLEANEXP ')' BLOCO
 			{
 				$5.isFunction = false;
-				$$.jump = gerarBloco();
-				$$.blocoIni = gerarInicioDeBloco($$.jump);
-				$$.blocoFim = gerarFimDeBloco($$.jump);
+				atributos* att = estruturasDeRepeticao.front();
+				$$.jump = att->jump;
+				$$.blocoIni = att->blocoIni;
+				$$.blocoFim = att->blocoFim;
 			    $$.traducao = $3.traducao + "\n\t" + $$.blocoIni + ":\n\tif (" + $3.label +" == 0) goto " + $$.blocoFim + ";\n" 
 			    + $5.traducao + "\n\tgoto " + $$.blocoIni + ";\n\t" + $$.blocoFim + ":\n";
+
+			    estruturasDeRepeticao.pop_front();
 			}
 			;
 
-DO 			: TK_DO BLOCO TK_WHILE '(' BOOLEANEXP ')' ';'
+WHILE_LABEL : TK_WHILE
+			{
+				atributos* att = new atributos;
+				att->jump = gerarBloco();
+				att->blocoIni = gerarInicioDeBloco(att->jump);
+				att->blocoFim = gerarFimDeBloco(att->jump);
+				att->tipo = "while";
+				estruturasDeRepeticao.push_front(att);
+			}
+			;
+
+DO 			: DO_LABEL BLOCO TK_WHILE '(' BOOLEANEXP ')' ';'
 			{
 				$2.isFunction = false;
-				$$.jump = gerarBloco();
-				$$.blocoIni = gerarInicioDeBloco($$.jump);
-				$$.blocoFim = gerarFimDeBloco($$.jump);
+				atributos* att = estruturasDeRepeticao.front();
+				$$.jump = att->jump;
+				$$.blocoIni = att->blocoIni;
+				$$.blocoFim = att->blocoFim;
 			    $$.traducao = "\n\t" + $$.blocoIni + "\n" + $5.traducao + $2.traducao + "\n\tif (" + $5.label + " == 0)" +
 			    "goto " + $$.blocoFim + ";" + 	"\n\t" + "goto " + $$.blocoIni + ";" + "\n\t" + $$.blocoFim + ":\n";
+			    estruturasDeRepeticao.pop_front();
+			}
+			;
+
+DO_LABEL	: TK_DO
+			{
+				atributos* att = new atributos;
+				att->jump = gerarBloco();
+				att->blocoIni = gerarInicioDeBloco(att->jump);
+				att->blocoFim = gerarFimDeBloco(att->jump);
+				att->tipo = "do";
+				estruturasDeRepeticao.push_front(att);
+			}
+			;
+
+FOR 		:  FOR_LABEL '(' ATRIBUICAO ';' BOOLEANEXP ';' ATRIBUICAO ')' BLOCO
+			{
+				atributos* att = estruturasDeRepeticao.front();
+				$$.jump = att->jump;
+				$$.blocoIni = att->blocoIni;
+				$$.blocoFim = att->blocoFim;
+				$$.traducao = $3.traducao + "\n\t" + $$.blocoIni + ":\n\t" + $5.traducao + 
+				"\n\tif(" + $5.label + " == 0) goto " + $$.blocoFim + ";\n\t" + $9.traducao + "\n\n" + $7.traducao + 
+				"\tgoto " + $$.blocoIni + ";\n\t" + $$.blocoFim;
+
+				estruturasDeRepeticao.pop_front();
+			}
+			;
+
+FOR_LABEL	: TK_FOR
+			{
+				atributos* att = new atributos;
+				att->jump = gerarBloco();
+				att->blocoIni = gerarInicioDeBloco(att->jump);
+				att->blocoFim = gerarFimDeBloco(att->jump);
+				att->tipo = "for";
+				estruturasDeRepeticao.push_front(att);
+			}
+			;
+
+BREAK 		: TK_BREAK ';'
+			{
+				if(estruturasDeRepeticao.size() < 1)
+					yyerror("Não e possivel usar o comando 'break' fora de blocos 'for', 'while' e 'do/while'.");
+
+				atributos * att = estruturasDeRepeticao.front();
+				$$.traducao = "\n\tgoto " + att->blocoFim + ";\n";
+			}
+			;
+
+CONTINUE 	: TK_CONTINUE ';'
+			{
+				if(estruturasDeRepeticao.size() < 1)
+					yyerror("Não e possivel usar o comando 'continue' fora de blocos 'for', 'while' e 'do/while'.");
+
+				atributos * att = estruturasDeRepeticao.front();
+				$$.traducao = "\n\tgoto " + att->blocoIni + ";\n";
 			}
 			;
 
@@ -572,6 +655,11 @@ BOOLEANEXP	: '(' BOOLEANEXP ')'
 				$$.traducao = $1.traducao + "\tint " + $$.label + " = " + $1.label + ";\n";
 			}
 			| BOOLEANTYPE
+			{
+				$$.label = $1.label;
+				$$.traducao = $1.traducao;
+				$$.tipo = $1.tipo;
+			}
 			;
 
 BOOLEANTYPE : TK_TIPO_BOOL_TRUE
@@ -702,6 +790,11 @@ NUMEXP		: '(' NUMEXP ')'
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.tipo + " " + $$.label + " = " + $1.label + " >> " + $3.label + ";\n";
 			}
 			| NUMBER
+			{
+				$$.tipo = $1.tipo;
+				$$.label = $1.label;
+				$$.traducao = $1.traducao;
+			}
 			;
 
 CHAREXP		: TK_CHAR

@@ -57,6 +57,9 @@ ID {LETRA}({LETRA}|{NUM})*
 "else"		{ return TK_ELSE; }
 "while"		{ return TK_WHILE; }
 "do"		{ return TK_DO; }
+"for"		{ return TK_FOR; }
+"break"		{ return TK_BREAK; }
+"continue"	{ return TK_CONTINUE; }
 
 {NUM}		{ yylval.traducao = yytext; return TK_NUM; }
 {ID}		{ yylval.label = yytext; return TK_ID; }

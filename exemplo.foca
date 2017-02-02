@@ -15,7 +15,22 @@ int main()
 			do
 			{
 				a = B + 1;
+
+				if(a < 33333)
+				{
+					break;
+				}
+
 			} while (a < 3);
+		}
+	}
+
+	for(B = 0; B < 5; B = B + 1)
+	{
+		int x = 99999;
+		if(x + B < 777)
+		{
+			break;
 		}
 	}
 }
