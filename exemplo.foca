@@ -1,17 +1,21 @@
 int main()
 {
 	int B = 34;
-	int a = 1;
 
-	while(2 == 2)
+	while(true)
 	{
-		if(6 > 25)
+		if(B > 25)
 		{
 			int a = 7 + 11;
 		}
 		else
 		{
-			float b = 8 + 12;
+			int a = 0;
+			
+			do
+			{
+				a = B + 1;
+			} while (a < 3);
 		}
 	}
 }

@@ -23,9 +23,9 @@ ID {LETRA}({LETRA}|{NUM})*
 
 "int"		{return TK_TIPO_INT;}
 "float"		{return TK_TIPO_FLOAT;}
-"double"	{return TK_TIPO_DOUBLE;}
-"char"		{return TK_TIPO_STRING;}
+"char"		{return TK_TIPO_CHAR;}
 "boolean"	{return TK_TIPO_BOOL;}
+"string"	{return TK_TIPO_STRING;}
 
 "true"		{return TK_TIPO_BOOL_TRUE;}
 "false"		{return TK_TIPO_BOOL_FALSE;}
@@ -56,6 +56,7 @@ ID {LETRA}({LETRA}|{NUM})*
 "if"		{ return TK_IF; }
 "else"		{ return TK_ELSE; }
 "while"		{ return TK_WHILE; }
+"do"		{ return TK_DO; }
 
 {NUM}		{ yylval.traducao = yytext; return TK_NUM; }
 {ID}		{ yylval.label = yytext; return TK_ID; }

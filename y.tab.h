@@ -49,7 +49,7 @@ extern int yydebug;
     TK_CHAR = 259,
     TK_REAL = 260,
     TK_TIPO_FLOAT = 261,
-    TK_TIPO_DOUBLE = 262,
+    TK_TIPO_CHAR = 262,
     TK_TIPO_STRING = 263,
     TK_TIPO_BOOL = 264,
     TK_MAIN = 265,
@@ -76,10 +76,11 @@ extern int yydebug;
     TK_IF = 286,
     TK_ELSE = 287,
     TK_WHILE = 288,
-    TK_PLUS = 289,
-    TK_SUB = 290,
-    TK_MULT = 291,
-    TK_DIV = 292
+    TK_DO = 289,
+    TK_PLUS = 290,
+    TK_SUB = 291,
+    TK_MULT = 292,
+    TK_DIV = 293
   };
 #endif
 /* Tokens.  */
@@ -87,7 +88,7 @@ extern int yydebug;
 #define TK_CHAR 259
 #define TK_REAL 260
 #define TK_TIPO_FLOAT 261
-#define TK_TIPO_DOUBLE 262
+#define TK_TIPO_CHAR 262
 #define TK_TIPO_STRING 263
 #define TK_TIPO_BOOL 264
 #define TK_MAIN 265
@@ -114,10 +115,11 @@ extern int yydebug;
 #define TK_IF 286
 #define TK_ELSE 287
 #define TK_WHILE 288
-#define TK_PLUS 289
-#define TK_SUB 290
-#define TK_MULT 291
-#define TK_DIV 292
+#define TK_DO 289
+#define TK_PLUS 290
+#define TK_SUB 291
+#define TK_MULT 292
+#define TK_DIV 293
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

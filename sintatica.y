@@ -4,7 +4,7 @@
 #include <sstream>
 #include <fstream>
 #include <map>
-#include <stack> 
+#include <list> 
 
 #define YYSTYPE atributos
 
@@ -19,6 +19,7 @@ struct atributos
 	string jump;
 	string blocoIni;
 	string blocoFim;
+	bool isFunction;
 };
 
 //Estrutura que guarda informações sobre o cast a ser feito
@@ -29,7 +30,7 @@ typedef struct _tipo_cast
 } tipo_cast;
 // Mapa de casts
 map<string, tipo_cast> mapa_cast;
-stack< map<string,atributos> > escopo;
+list < map<string,atributos>* > escopo;
 int contador = 0;
 int numBloco = 0;
 int yylex(void);
@@ -39,11 +40,13 @@ string createvar(void);
 // Função para geração do mapa de cast
 void gera_mapa_cast();
 string gera_chave(string operador1, string operador2, string operacao);
+tipo_cast cast_possivel(string tipo1, string tipo2, string operador);
 
 //Funções para escopo
 void abrirEscopo();
 void fecharEscopo();
 bool varNoEscopo(string varName);
+atributos* getVarNoEscopo(string varName);
 string gerarBloco();
 string gerarInicioDeBloco(string l);
 string gerarFimDeBloco(string l);
@@ -54,8 +57,7 @@ string gerarFimDeBloco(string l);
 %token TK_CHAR
 %token TK_REAL
 %token TK_TIPO_FLOAT
-%token TK_TIPO_DOUBLE
-%token TK_TIPO_STRING
+%token TK_TIPO_CHAR TK_TIPO_STRING
 %token TK_TIPO_BOOL
 %token TK_MAIN TK_ID TK_TIPO_INT
 %token TK_FIM TK_ERROR
@@ -64,7 +66,7 @@ string gerarFimDeBloco(string l);
 %token TK_EQ TK_MOD
 %token TK_TIPO_BOOL_TRUE TK_TIPO_BOOL_FALSE
 %token TK_SHIFT_LEFT TK_SHIFT_RIGHT
-%token TK_IF TK_ELSE TK_WHILE
+%token TK_IF TK_ELSE TK_WHILE TK_DO
 
 %start S
 
@@ -73,7 +75,18 @@ string gerarFimDeBloco(string l);
 
 %%
 
-S 			: TK_TIPO_INT TK_MAIN '(' ')' BLOCO
+S 			: ESCOPO_GLOBAL FUNC_MAIN
+			{
+
+			}
+			;
+
+ESCOPO_GLOBAL: {
+					abrirEscopo();
+				}
+				;
+
+FUNC_MAIN 	: TK_TIPO_INT TK_MAIN '(' ')' BLOCO
 			{
 				cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nint main(void)\n{\n" << $5.traducao << "\treturn 0;\n}" << endl; 
 			}
@@ -88,13 +101,15 @@ ESCOPO_INI	: '{'
 			{
 				abrirEscopo();
 				$$.traducao = "";
-			};
+			}
+			;
 
 ESCOPO_FIM	: '}'
 			{
 				fecharEscopo();
 				$$.traducao = "";
-			};
+			}
+			;
 
 DECLARACAO	: DECLARACAOSIMPLES
 			| DECLARACAOATRIBUICAO
@@ -102,47 +117,55 @@ DECLARACAO	: DECLARACAOSIMPLES
 
 DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
 				  {
-				  		map<string,atributos> mapa = escopo.top();
+				  		map<string,atributos>* mapa = escopo.front();
 				  		if(varNoEscopo($2.label) == false){
-				  			mapa[$2.label].label = createvar();
-				  			mapa[$2.label].tipo = "int"; 
+				  			(*mapa)[$2.label].label = createvar();
+				  			(*mapa)[$2.label].tipo = "int"; 
 				  		}
 
-				  		$$.tipo = mapa[$2.label].tipo;
-						$2.label = mapa[$2.label].label;
+				  		$$.tipo = (*mapa)[$2.label].tipo;
+						$2.label = (*mapa)[$2.label].label;
 
 						$$.label =  $2.label;
 						$$.traducao = "\tint " + $$.label + ";\n";
 				  }
 				  | TK_TIPO_FLOAT TK_ID ';'
 				  {
-				  		map<string,atributos> mapa = escopo.top();
+				  		map<string,atributos>* mapa = escopo.front();
 				  		if(varNoEscopo($2.label) == false){
-				  			mapa[$2.label].label = createvar();
-				  			mapa[$2.label].tipo = "int"; 
+				  			(*mapa)[$2.label].label = createvar();
+				  			(*mapa)[$2.label].tipo = "int"; 
 				  		}
 
-				  		$$.tipo = mapa[$2.label].tipo;
-						$2.label = mapa[$2.label].label;
+				  		$$.tipo = (*mapa)[$2.label].tipo;
+						$2.label = (*mapa)[$2.label].label;
 
 						$$.label =  $2.label;
 						$$.traducao = "\tfloat " + $$.label + ";\n";
 				  }
-				  | TK_TIPO_STRING TK_ID ';'
+				  | TK_TIPO_CHAR TK_ID ';'
 				  {
-						$$.label = createvar();
-						$$.traducao = "\tstring " + $$.label + ";\n";
+						$$.label = createvar();map<string,atributos>* mapa = escopo.front();
+				  		if(varNoEscopo($2.label) == false){
+				  			(*mapa)[$2.label].label = createvar();
+				  			(*mapa)[$2.label].tipo = "char"; 
+				  		}
+
+					 	$$.label = (*mapa)[$2.label].label;
+					 	$$.tipo = (*mapa)[$2.label].tipo;
+					 	$2.label = (*mapa)[$2.label].label;
+						$$.traducao = "\tchar " + $$.label + ";\n";
 				  }
 				  | TK_TIPO_BOOL TK_ID ';'
 				  {
-				  		map<string,atributos> mapa = escopo.top();
+				  		map<string,atributos>* mapa = escopo.front();
 				  		if(varNoEscopo($2.label) == false){
-				  			mapa[$2.label].label = createvar();
-				  			mapa[$2.label].tipo = "int"; 
+				  			(*mapa)[$2.label].label = createvar();
+				  			(*mapa)[$2.label].tipo = "int"; 
 				  		}
 
-				  		$$.tipo = mapa[$2.label].tipo;
-						$2.label = mapa[$2.label].label;
+				  		$$.tipo = (*mapa)[$2.label].tipo;
+						$2.label = (*mapa)[$2.label].label;
 
 						$$.label =  $2.label;
 						$$.traducao = "\tint " + $$.label + ";\n";
@@ -151,70 +174,192 @@ DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
 
 DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 {
-					 	$$.label = createvar();
+					 	map<string,atributos>* mapa = escopo.front();
+				  		if(varNoEscopo($2.label) == false){
+				  			(*mapa)[$2.label].label = createvar();
+				  			(*mapa)[$2.label].tipo = "int"; 
+				  		}
+
+					 	$$.label = (*mapa)[$2.label].label;
+					 	$$.tipo = (*mapa)[$2.label].tipo;
+					 	$2.label = (*mapa)[$2.label].label;
 					 	$$.traducao = "\tint " + $$.label + " = " + $4.traducao + ";\n";
 					 }
 					 | TK_TIPO_INT TK_ID TK_EQ NUMEXP ';'
 					 {
 					 	$$.label = createvar();
+					 	map<string,atributos>* mapa = escopo.front();
+				  		if(varNoEscopo($2.label) == false){
+				  			(*mapa)[$2.label].label = createvar();
+				  			(*mapa)[$2.label].tipo = "int"; 
+				  		}
+
+					 	$$.label = (*mapa)[$2.label].label;
+					 	$$.tipo = (*mapa)[$2.label].tipo;
+					 	$2.label = (*mapa)[$2.label].label;
+
 					 	$$.traducao = $4.traducao + "\tint " + $$.label + " = " + $4.label + ";\n";
 					 }
 					 | TK_TIPO_FLOAT TK_ID TK_EQ TK_REAL ';'
 					 {
-					 	$$.label = createvar();
+					 	$$.label = createvar();map<string,atributos>* mapa = escopo.front();
+				  		if(varNoEscopo($2.label) == false){
+				  			(*mapa)[$2.label].label = createvar();
+				  			(*mapa)[$2.label].tipo = "float"; 
+				  		}
+
+					 	$$.label = (*mapa)[$2.label].label;
+					 	$$.tipo = (*mapa)[$2.label].tipo;
+					 	$2.label = (*mapa)[$2.label].label;
 					 	$$.traducao = "\tfloat " + $$.label + " = " + $4.label + ";\n";
 					 }
 					 | TK_TIPO_FLOAT TK_ID TK_EQ NUMEXP ';'
 					 {
-					 	$$.label = createvar();
+					 	$$.label = createvar();map<string,atributos>* mapa = escopo.front();
+				  		if(varNoEscopo($2.label) == false){
+				  			(*mapa)[$2.label].label = createvar();
+				  			(*mapa)[$2.label].tipo = "float"; 
+				  		}
+
+					 	$$.label = (*mapa)[$2.label].label;
+					 	$$.tipo = (*mapa)[$2.label].tipo;
+					 	$2.label = (*mapa)[$2.label].label;
 					 	$$.traducao = $4.traducao + "\tfloat " + $$.label + " = " + $4.label + ";\n";
 					 }
-					 | TK_TIPO_STRING TK_ID TK_EQ TK_CHAR';'
+					 | TK_TIPO_CHAR TK_ID TK_EQ TK_CHAR';'
 					 {
-					 	$$.label = createvar();
-					 	$$.traducao = "\tchar " + $$.label + " = " + $4.traducao + ";\n";
-					 }
-					 | TK_TIPO_STRING TK_ID TK_EQ  E ';'
-					 {
-					 	$$.label = createvar();
-					 	$$.traducao = $4.traducao + "\tchar " + $$.label + " = " + $4.label + ";\n";
+					 	$$.label = createvar();map<string,atributos>* mapa = escopo.front();
+				  		if(varNoEscopo($2.label) == false){
+				  			(*mapa)[$2.label].label = createvar();
+				  			(*mapa)[$2.label].tipo = "char"; 
+				  		}
+
+					 	$$.label = (*mapa)[$2.label].label;
+					 	$$.tipo = (*mapa)[$2.label].tipo;
+					 	$2.label = (*mapa)[$2.label].label;
+					 	$$.traducao = "\tchar " + $$.label + " = '" + $4.traducao + "';\n";
 					 }
 					 | TK_TIPO_BOOL TK_ID TK_EQ  TK_TIPO_BOOL_TRUE';'
 					 {
 					 	$$.label = createvar();
+					 	map<string,atributos>* mapa = escopo.front();
+				  		if(varNoEscopo($2.label) == false){
+				  			(*mapa)[$2.label].label = createvar();
+				  			(*mapa)[$2.label].tipo = "int"; 
+				  		}
+
+					 	$$.label = (*mapa)[$2.label].label;
+					 	$$.tipo = (*mapa)[$2.label].tipo;
+					 	$2.label = (*mapa)[$2.label].label;
 					 	$$.traducao = "\tint " + $$.label + " = 1;\n";
 					 }
 					 | TK_TIPO_BOOL TK_ID TK_EQ  TK_TIPO_BOOL_FALSE ';'
 					 {
-					 	$$.label = createvar();
+					 	$$.label = createvar();map<string,atributos>* mapa = escopo.front();
+				  		if(varNoEscopo($2.label) == false){
+				  			(*mapa)[$2.label].label = createvar();
+				  			(*mapa)[$2.label].tipo = "int"; 
+				  		}
+
+					 	$$.label = (*mapa)[$2.label].label;
+					 	$$.tipo = (*mapa)[$2.label].tipo;
+					 	$2.label = (*mapa)[$2.label].label;
 					 	$$.traducao = "\tint " + $$.label + " = 0;\n";
 					 }
 					 | TK_TIPO_BOOL TK_ID TK_EQ  BOOLEANEXP ';'
 					 {
-					 	$$.label = createvar();
+					 	$$.label = createvar();map<string,atributos>* mapa = escopo.front();
+				  		if(varNoEscopo($2.label) == false){
+				  			(*mapa)[$2.label].label = createvar();
+				  			(*mapa)[$2.label].tipo = "int"; 
+				  		}
+
+					 	$$.label = (*mapa)[$2.label].label;
+					 	$$.tipo = (*mapa)[$2.label].tipo;
+					 	$2.label = (*mapa)[$2.label].label;
 					 	$$.traducao = $4.traducao + "\tint " + $$.label + " = " + $4.label + ";\n";
 					 }
 					 ;
 
-ATRIBUICAO	: TK_ID TK_EQ TK_NUM ';'
+ATRIBUICAO	: TK_ID TK_EQ NUMBER ';'
 			 {
-			 	$$.label = createvar();
-			 	$$.traducao = $1.traducao + " = " + $3.traducao + ";\n";
+			 	//Verificando se a variavel existe no escopo corrente
+				$$.label = createvar();
+
+		  		if(varNoEscopo($1.label) == false) 
+		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
+
+		  		atributos* varDeclarada = getVarNoEscopo($1.label);
+		  		string tipoAtual = varDeclarada->tipo;
+
+		  		tipo_cast cast = cast_possivel(varDeclarada->tipo, $3.tipo, "=");
+
+		  		//TODO:Fazer cast implicito se possivel
+		  		if(varDeclarada->tipo != $3.tipo && cast.resultado == "")
+		  			yyerror("Variavel '" + $1.label +"' do tipo " + varDeclarada->tipo + " imcompativel com o tipo " + $3.tipo);
+
+		  		if(cast.resultado != varDeclarada->tipo)
+		 			tipoAtual = cast.resultado;
+
+		  		$$.traducao = $3.traducao + "\n\t" + varDeclarada->label + " = (" + tipoAtual + ")" + $3.label + ";\n";
 			 }
 			| TK_ID TK_EQ E
 			{
+				//Verificando se a variavel existe no escopo corrente
 				$$.label = createvar();
-			 	$$.traducao = $3.traducao + "\t" + $1.label + " = " + $3.label + ";\n";
+
+		  		if(varNoEscopo($1.label) == false) 
+		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
+
+		  		atributos* varDeclarada = getVarNoEscopo($1.label);
+		  		string tipoAtual = varDeclarada->tipo;
+
+		  		tipo_cast cast = cast_possivel(varDeclarada->tipo, $3.tipo, "=");
+
+		  		//TODO:Fazer cast implicito se possivel
+		  		if(varDeclarada->tipo != $3.tipo && cast.resultado == "")
+		  			yyerror("Variavel '" + $1.label +"' do tipo " + varDeclarada->tipo + " imcompativel com o tipo " + $3.tipo);
+			 	
+			 	if(cast.resultado != varDeclarada->tipo)
+		 			tipoAtual = cast.resultado;
+			 	
+			 	$$.traducao = $3.traducao + "\n\t" + varDeclarada->label + " = (" + tipoAtual + ") " + $3.label + ";\n";
 			}
 			| TK_ID TK_EQ TK_REAL ';'
 			{
 				$$.label = createvar();
-			 	$$.traducao = $1.traducao + " = " + $3.traducao + ";\n";
+
+		  		if(varNoEscopo($1.label) == false) 
+		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
+
+		  		atributos* varDeclarada = getVarNoEscopo($1.label);
+		  		string tipoAtual = varDeclarada->tipo;
+
+		  		tipo_cast cast = cast_possivel(varDeclarada->tipo, "float", "=");
+
+		  		//TODO:Fazer cast implicito se possivel
+		  		if(varDeclarada->tipo != "float" && cast.resultado == "")
+		  			yyerror("Variavel '" + $1.label +"' do tipo " + varDeclarada->tipo + " imcompativel com o tipo float");
+			 	
+			 	if(cast.resultado != varDeclarada->tipo)
+		 			tipoAtual = cast.resultado;
+
+			 	$$.traducao = $1.traducao + " = (" + tipoAtual + ")" + $3.traducao + ";\n";
 			}
 			| TK_ID TK_EQ TK_CHAR';'
 			{
 				$$.label = createvar();
-			 	$$.traducao = $1.traducao + " = " + $3.traducao + ";\n";
+
+		  		if(varNoEscopo($1.label) == false) 
+		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
+
+		  		atributos* varDeclarada = getVarNoEscopo($1.label);
+
+		  		//TODO:Fazer cast implicito se possivel
+		  		if(varDeclarada->tipo != "char")
+		  			yyerror("Variavel '" + $1.label +"' do tipo " + varDeclarada->tipo + " imcompativel com o tipo char");
+
+			 	$$.traducao = $1.traducao + " = '" + $3.traducao + "';\n";
 			}
 			| TK_ID TK_EQ CAST ';'
 			;
@@ -271,12 +416,25 @@ COMANDO 	: E ';'
 			| ATRIBUICAO
 			| IF
 			| WHILE
+			| DO
 			;
 
 E 			: NUMEXP
+			{
+				$$.tipo = $1.tipo;
+			}
 			| CHAREXP
+			{
+				$$.tipo = $1.tipo;	
+			}
 			| BOOLEANEXP
+			{
+				$$.tipo = $1.tipo;
+			}
 			| CAST
+			{
+				$$.tipo = $1.tipo;
+			}
 			;
 
 IF 			: TK_IF '(' BOOLEANEXP ')' BLOCO
@@ -284,6 +442,7 @@ IF 			: TK_IF '(' BOOLEANEXP ')' BLOCO
 				$$.jump = gerarBloco();
 				$$.blocoIni = gerarInicioDeBloco($$.jump);
 				$$.blocoFim = gerarFimDeBloco($$.jump);
+				$5.isFunction = false;
 				//Se condição for false, usar goto para pular o bloco inteiro de $5
 			    $$.traducao = $3.traducao + "\n\tif (" + $3.label +" == 0) goto " + $$.blocoFim + ";\n" 
 			    + $5.traducao + "\t" + $$.blocoFim + ":\n";
@@ -293,7 +452,8 @@ IF 			: TK_IF '(' BOOLEANEXP ')' BLOCO
 				$$.jump = gerarBloco();
 				$$.blocoIni = gerarInicioDeBloco($$.jump);
 				$$.blocoFim = gerarFimDeBloco($$.jump);
-			    $$.traducao= "\n" + $3.traducao + 
+				$5.isFunction = false;
+			    $$.traducao = "\n" + $3.traducao + 
 					 "\n\t" + "if(" + $3.label + " == 0) goto " + $6.blocoIni + ";\n" + 
 					 $5.traducao + 
 					 "\tgoto " + $6.blocoFim +";\n" +
@@ -304,7 +464,7 @@ IF 			: TK_IF '(' BOOLEANEXP ')' BLOCO
 
 ELSE        : TK_ELSE BLOCO
 			{
-				
+				$2.isFunction = false;	
 				$$.jump = gerarBloco();
 				$$.blocoIni = gerarInicioDeBloco($$.jump);
 				$$.blocoFim = gerarFimDeBloco($$.jump);
@@ -323,11 +483,23 @@ ELSE        : TK_ELSE BLOCO
 
 WHILE 		: TK_WHILE '(' BOOLEANEXP ')' BLOCO
 			{
+				$5.isFunction = false;
 				$$.jump = gerarBloco();
 				$$.blocoIni = gerarInicioDeBloco($$.jump);
 				$$.blocoFim = gerarFimDeBloco($$.jump);
 			    $$.traducao = $3.traducao + "\n\t" + $$.blocoIni + ":\n\tif (" + $3.label +" == 0) goto " + $$.blocoFim + ";\n" 
 			    + $5.traducao + "\n\tgoto " + $$.blocoIni + ";\n\t" + $$.blocoFim + ":\n";
+			}
+			;
+
+DO 			: TK_DO BLOCO TK_WHILE '(' BOOLEANEXP ')' ';'
+			{
+				$2.isFunction = false;
+				$$.jump = gerarBloco();
+				$$.blocoIni = gerarInicioDeBloco($$.jump);
+				$$.blocoFim = gerarFimDeBloco($$.jump);
+			    $$.traducao = "\n\t" + $$.blocoIni + "\n" + $5.traducao + $2.traducao + "\n\tif (" + $5.label + " == 0)" +
+			    "goto " + $$.blocoFim + ";" + 	"\n\t" + "goto " + $$.blocoIni + ";" + "\n\t" + $$.blocoFim + ":\n";
 			}
 			;
 
@@ -343,41 +515,60 @@ NUMBER		: TK_REAL
 				$$.traducao = "\tint "+ $$.label+ " = " + $1.traducao + ";\n";
 				$$.tipo = "int";
 			}
+			| TK_ID
+			{
+				//Verificando se a variavel existe no escopo corrente
+				$$.label = createvar();
+				atributos* variavel = getVarNoEscopo($1.label);
+
+		  		if(varNoEscopo($1.label) == false) 
+		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
+
+		  		$$.traducao = "\t" + variavel->tipo + " " + $$.label + " = " + variavel->label + ";\n";
+		  		$$.tipo = variavel->tipo;
+			}
 			;
 
 BOOLEANEXP	: '(' BOOLEANEXP ')' 
 			{
 				$$.label = createvar();
+				$$.tipo = "boolean";
 				$$.traducao = $2.traducao + "\tint " + $$.label + " = " + $2.label + ";\n";
 			}
 			| BOOLEANEXP TK_OR BOOLEANEXP 
 			{
 				$$.label = createvar();
+				$$.tipo = "boolean";
 				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label + " = " + $1.label + " || " + $3.label + ";\n";
 			}
 			| BOOLEANEXP TK_AND BOOLEANEXP 
 			{
 				$$.label = createvar();
+				$$.tipo = "boolean";
 				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label + " = " + $1.label + " && " + $3.label + ";\n";
 			}
 			| TK_NOT TK_ID 
 			{
 				$$.label = createvar();
+				$$.tipo = "boolean";
 				$$.traducao = "\tint " + $$.label + " = " + $1.traducao + " == 0;\n";
 			}
 			| TK_NOT BOOLEANTYPE 
 			{
 				$$.label = createvar();
+				$$.tipo = "boolean";
 				$$.traducao = $2.traducao + "\tint " + $$.label + " = " + $2.label + " == 0;\n";
 			}
 			| TK_NOT '(' BOOLEANEXP ')' 
 			{
 				$$.label = createvar();
+				$$.tipo = "boolean";
 				$$.traducao = $3.traducao + "\tint " + $$.label + " = " + $3.label + " == 0;\n";
 			}
 			| LOGICALEXP
 			{
 				$$.label = createvar();
+				$$.tipo = "boolean";
 				$$.traducao = $1.traducao + "\tint " + $$.label + " = " + $1.label + ";\n";
 			}
 			| BOOLEANTYPE
@@ -386,11 +577,13 @@ BOOLEANEXP	: '(' BOOLEANEXP ')'
 BOOLEANTYPE : TK_TIPO_BOOL_TRUE
 			{
 				$$.label = createvar();
+				$$.tipo = "boolean";
 				$$.traducao = "\tint "+ $$.label+ " = 1;\n";
 			}
 			| TK_TIPO_BOOL_FALSE
 			{
 				$$.label = createvar();
+				$$.tipo = "boolean";
 				$$.traducao = "\tint "+ $$.label+ " = 0;\n";
 			}
 			;
@@ -398,36 +591,43 @@ BOOLEANTYPE : TK_TIPO_BOOL_TRUE
 LOGICALEXP	: '(' LOGICALEXP ')' 
 			{
 				$$.label = createvar();
+				$$.tipo = "boolean";
 				$$.traducao = $2.traducao + "\tint " + $$.label + " = " + $2.label + ";\n";
 			}
 			| NUMEXP TK_COMP NUMEXP 
 			{
 				$$.label = createvar();
+				$$.tipo = "boolean";
 				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label + " = " + $1.label + " == " + $3.label + ";\n";
 			}
 			| NUMEXP TK_DIFF NUMEXP 
 			{
 				$$.label = createvar();
+				$$.tipo = "boolean";
 				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label + " = " + $1.label + " != " + $3.label + ";\n";
 			}
 			| NUMEXP TK_LT NUMEXP 
 			{
 				$$.label = createvar();
+				$$.tipo = "boolean";
 				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label + " = " + $1.label + " < " + $3.label + ";\n";
 			}
 			| NUMEXP TK_LTE NUMEXP 
 			{
 				$$.label = createvar();
+				$$.tipo = "boolean";
 				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label + " = " + $1.label + " <= " + $3.label + ";\n";
 			}
 			| NUMEXP TK_GT NUMEXP 
 			{
 				$$.label = createvar();
+				$$.tipo = "boolean";
 				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label + " = " + $1.label + " > " + $3.label + ";\n";
 			}
 			| NUMEXP TK_GTE NUMEXP 
 			{
 				$$.label = createvar();
+				$$.tipo = "boolean";
 				$$.traducao = $1.traducao + $3.traducao + "\tint " + $$.label + " = " + $1.label + " >= " + $3.label + ";\n";
 			}
 			;
@@ -507,6 +707,7 @@ NUMEXP		: '(' NUMEXP ')'
 CHAREXP		: TK_CHAR
 			{
 				$$.label = createvar();
+				$$.tipo = "char";
 				$$.traducao = "\t"+ $$.label+ " = " + $1.traducao + ";\n";
 			}
 			;
@@ -554,19 +755,41 @@ string gera_chave(string operador1, string operador2, string operacao) {
 	return operador1 + "_" + operacao + "_" + operador2;
 }
 
+tipo_cast cast_possivel(string tipo1, string tipo2, string operador){
+	return mapa_cast[gera_chave(tipo1, tipo2, operador)];
+}
+
 void abrirEscopo(){
-	map<string,atributos> novoEscopo;
-	escopo.push(novoEscopo);
+	map<string,atributos> *novoEscopo = new map<string,atributos>;
+	escopo.push_front(novoEscopo);
 }
 
 void fecharEscopo(){
-	escopo.pop();
+	escopo.pop_front();
 }
 
 bool varNoEscopo(string varName){
-	map<string,atributos> mapa = escopo.top();
+	for (std::list< map<string,atributos>* >::iterator it=escopo.begin(); it!=escopo.end(); it++)
+    {
+    	map<string,atributos>* m = *it;
 
-	return mapa.find(varName) != mapa.end();
+    	if((*m).find(varName) != (*m).end())
+    		return true;
+    }
+
+	return false;
+}
+
+atributos* getVarNoEscopo(string varName){
+	for (std::list< map<string,atributos>* >::iterator it=escopo.begin(); it!=escopo.end(); it++)
+    {
+    	map<string,atributos>* m = *it;
+
+    	if((*m).find(varName) != (*m).end())
+    		return &(*m)[varName];
+    }
+
+	return NULL;
 }
 
 string gerarBloco()
