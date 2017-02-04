@@ -33,4 +33,9 @@ int main()
 			break;
 		}
 	}
+
+	string final;
+	string minhaString = "la, ";
+	string outraString = minhaString + "tudo bem";
+	final = "O" + minhaString + outraString;
 }

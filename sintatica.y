@@ -20,6 +20,8 @@ struct atributos
 	string blocoIni;
 	string blocoFim;
 	bool isFunction;
+	bool stringDinamica;
+	int tamanhoString;
 };
 
 //Estrutura que guarda informações sobre o cast a ser feito
@@ -51,12 +53,13 @@ atributos* getVarNoEscopo(string varName);
 string gerarBloco();
 string gerarInicioDeBloco(string l);
 string gerarFimDeBloco(string l);
-
+template < typename T > std::string to_string( const T& n );
 %}
 
 %token TK_NUM
 %token TK_CHAR
 %token TK_REAL
+%token TK_STRING
 %token TK_TIPO_FLOAT
 %token TK_TIPO_CHAR TK_TIPO_STRING
 %token TK_TIPO_BOOL
@@ -171,6 +174,21 @@ DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
 						$$.label =  $2.label;
 						$$.traducao = "\tint " + $$.label + ";\n";
 				  }
+				  | TK_TIPO_STRING TK_ID ';'
+				  {
+				  		map<string,atributos>* mapa = escopo.front();
+				  		if(varNoEscopo($2.label) == false){
+				  			(*mapa)[$2.label].label = createvar();
+				  			(*mapa)[$2.label].tipo = "string"; 
+				  			(*mapa)[$2.label].stringDinamica = true; 
+				  		}
+
+				  		$$.tipo = (*mapa)[$2.label].tipo;
+						$2.label = (*mapa)[$2.label].label;
+
+						$$.label =  $2.label;
+						$$.traducao = "\tchar[] " + $$.label + ";\n";
+				  }
 				  ;
 
 DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
@@ -256,7 +274,8 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 }
 					 | TK_TIPO_BOOL TK_ID TK_EQ  TK_TIPO_BOOL_FALSE ';'
 					 {
-					 	$$.label = createvar();map<string,atributos>* mapa = escopo.front();
+					 	$$.label = createvar();
+					 	map<string,atributos>* mapa = escopo.front();
 				  		if(varNoEscopo($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
@@ -269,7 +288,8 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 }
 					 | TK_TIPO_BOOL TK_ID TK_EQ  BOOLEANEXP ';'
 					 {
-					 	$$.label = createvar();map<string,atributos>* mapa = escopo.front();
+					 	$$.label = createvar();
+					 	map<string,atributos>* mapa = escopo.front();
 				  		if(varNoEscopo($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
@@ -279,6 +299,27 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 	$$.tipo = (*mapa)[$2.label].tipo;
 					 	$2.label = (*mapa)[$2.label].label;
 					 	$$.traducao = $4.traducao + "\tint " + $$.label + " = " + $4.label + ";\n";
+					 }
+					 | TK_TIPO_STRING TK_ID TK_EQ STRINGEXP ';'
+					 {
+				 		$$.label = createvar();
+				 		int tamanho = $4.tamanhoString;
+
+				 		map<string,atributos>* mapa = escopo.front();
+
+				  		if(varNoEscopo($2.label) == false){
+				  			(*mapa)[$2.label].label = createvar();
+				  			(*mapa)[$2.label].tipo = "string"; 
+				  			(*mapa)[$2.label].tamanhoString = tamanho;
+				  		}
+
+					 	$$.label = (*mapa)[$2.label].label;
+					 	$$.tipo = (*mapa)[$2.label].tipo;
+					 	$2.label = (*mapa)[$2.label].label;
+					 	$$.tamanhoString = (*mapa)[$2.label].tamanhoString;
+
+					 	$$.traducao = $4.traducao + "\tchar " + $$.label + "[" + to_string(tamanho) + "];\n\t" + "strncpy(" +
+					 	$$.label + "," + $4.label + "," + to_string(tamanho) + ");\n";
 					 }
 					 ;
 
@@ -308,6 +349,7 @@ ATRIBUICAO	: TK_ID TK_EQ NUMBER
 			{
 				//Verificando se a variavel existe no escopo corrente
 				$$.label = createvar();
+				bool castImplicito = false;
 
 		  		if(varNoEscopo($1.label) == false) 
 		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
@@ -321,10 +363,20 @@ ATRIBUICAO	: TK_ID TK_EQ NUMBER
 		  		if(varDeclarada->tipo != $3.tipo && cast.resultado == "")
 		  			yyerror("Variavel '" + $1.label +"' do tipo " + varDeclarada->tipo + " imcompativel com o tipo " + $3.tipo);
 			 	
-			 	if(cast.resultado != varDeclarada->tipo)
+			 	if(cast.resultado != varDeclarada->tipo && varDeclarada->tipo != "string")
+			 	{
 		 			tipoAtual = cast.resultado;
+		 			castImplicito = true;
+			 	}
 			 	
-			 	$$.traducao = $3.traducao + "\n\t" + varDeclarada->label + " = (" + tipoAtual + ") " + $3.label + ";\n";
+			 	if(castImplicito)
+			 	{
+			 		$$.traducao = $3.traducao + "\n\t" + varDeclarada->label + " = (" + tipoAtual + ") " + $3.label + ";\n";
+			 	}
+			 	else
+			 	{
+		 			$$.traducao = $3.traducao + "\n\t" + varDeclarada->label + " = " + $3.label + ";\n";
+			 	}
 			}
 			| TK_ID TK_EQ TK_REAL
 			{
@@ -442,6 +494,10 @@ E 			: NUMEXP
 			{
 				$$.tipo = $1.tipo;
 			}
+			| STRINGEXP
+			{
+				$$.tipo = $1.tipo;
+			}
 			| CAST
 			{
 				$$.tipo = $1.tipo;
@@ -549,7 +605,7 @@ FOR 		:  FOR_LABEL '(' ATRIBUICAO ';' BOOLEANEXP ';' ATRIBUICAO ')' BLOCO
 				$$.blocoFim = att->blocoFim;
 				$$.traducao = $3.traducao + "\n\t" + $$.blocoIni + ":\n\t" + $5.traducao + 
 				"\n\tif(" + $5.label + " == 0) goto " + $$.blocoFim + ";\n\t" + $9.traducao + "\n\n" + $7.traducao + 
-				"\tgoto " + $$.blocoIni + ";\n\t" + $$.blocoFim;
+				"\tgoto " + $$.blocoIni + ";\n\t" + $$.blocoFim + ":\n";
 
 				estruturasDeRepeticao.pop_front();
 			}
@@ -805,6 +861,42 @@ CHAREXP		: TK_CHAR
 			}
 			;
 
+STRINGEXP	: STRINGEXP TK_PLUS STRINGEXP
+			{
+				$$.label = createvar();
+				$$.tipo = "string";
+				int tamanho = $1.tamanhoString + $3.tamanhoString;
+				$$.tamanhoString = tamanho;
+				$$.traducao = $1.traducao + $3.traducao + "\n\tchar " + $$.label + "[" + to_string(tamanho) + "];\n" + 
+				"\tstrncpy(" + $$.label + "," + $1.label + "," + to_string($1.tamanhoString) + ");\n" +
+				"\tstrncpy(" + $$.label + " + " + to_string($1.tamanhoString + 1) + "," + $3.label + "," + to_string($3.tamanhoString) + ");\n";
+			}
+			| TK_STRING
+			{
+				$$.label = createvar();
+				$$.tipo = "string";
+				int tamanho = $1.traducao.size() - 1;
+				$$.tamanhoString = tamanho;
+				$$.traducao = "\n\tchar " + $$.label + "[" + to_string(tamanho) + "];\n" + 
+				"\tstrncpy(" + $$.label + "," + $1.traducao + "," + to_string(tamanho) + ");\n";
+			}
+			| TK_ID
+			{
+				//Verificando se a variavel existe no escopo corrente
+				$$.label = createvar();
+				cout << "LABEL = " << $$.label << endl;
+				atributos* variavel = getVarNoEscopo($1.label);
+
+		  		if(varNoEscopo($1.label) == false) 
+		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
+
+		  		$$.traducao = "\n\tchar " + $$.label + "[" + to_string(variavel->tamanhoString) + "];" +  
+		  		"\n\tstrncpy(" + $$.label + "," + variavel->label + "," + to_string(variavel->tamanhoString) + ");\n";
+
+		  		$$.tipo = variavel->tipo;
+		  		$$.tamanhoString = variavel->tamanhoString;
+			}
+			;
 
 %%
 
@@ -905,4 +997,11 @@ string gerarFimDeBloco(string l)
 	label << "blocoFim" << l;
 	
 	return label.str();
+}
+
+template < typename T > std::string to_string( const T& n )
+{
+    std::ostringstream stm ;
+    stm << n ;
+    return stm.str() ;
 }

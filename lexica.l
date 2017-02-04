@@ -6,12 +6,16 @@
 ESPACO [ \t]
 DIGITO [0-9]
 LETRA [A-Za-z_]
+ESPECIAIS [!?.,;:]
+
+CARACTERE {LETRA}|{NUM}|{ESPECIAIS}
 
 DELIM {ESPACO}+
 NUM {DIGITO}+
 REAL {NUM}+("."{NUM}+)?
 CHAR \'({LETRA}|{NUM})\'
 ID {LETRA}({LETRA}|{NUM})*
+STRING 		\'{DELIM}*{CARACTERE}+({DELIM}*{CARACTERE}+)*{DELIM}*\'|\"{DELIM}*{CARACTERE}+({DELIM}*{CARACTERE}+)*{DELIM}*\"
 
 %%
 
@@ -19,16 +23,16 @@ ID {LETRA}({LETRA}|{NUM})*
 
 {DELIM} 	{}
 
-"main"		{return TK_MAIN;}
+"main"		{ return TK_MAIN; }
 
-"int"		{return TK_TIPO_INT;}
-"float"		{return TK_TIPO_FLOAT;}
-"char"		{return TK_TIPO_CHAR;}
-"boolean"	{return TK_TIPO_BOOL;}
-"string"	{return TK_TIPO_STRING;}
+"int"		{ return TK_TIPO_INT; }
+"float"		{ return TK_TIPO_FLOAT; }
+"char"		{ return TK_TIPO_CHAR; }
+"boolean"	{ return TK_TIPO_BOOL; }
+"string"	{ return TK_TIPO_STRING; }
 
-"true"		{return TK_TIPO_BOOL_TRUE;}
-"false"		{return TK_TIPO_BOOL_FALSE;}
+"true"		{ return TK_TIPO_BOOL_TRUE; }
+"false"		{ return TK_TIPO_BOOL_FALSE; }
 
 [(){}[\];,]	{ return *yytext; }
 
@@ -65,6 +69,7 @@ ID {LETRA}({LETRA}|{NUM})*
 {ID}		{ yylval.label = yytext; return TK_ID; }
 {CHAR}		{ yylval.label = yytext; return TK_CHAR; }
 {REAL}		{ yylval.traducao = yytext; return TK_REAL; }
+{STRING}	{ yylval.traducao = yytext; return TK_STRING; }
 
 .			{ *yytext; }
 

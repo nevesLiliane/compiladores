@@ -48,84 +48,86 @@ extern int yydebug;
     TK_NUM = 258,
     TK_CHAR = 259,
     TK_REAL = 260,
-    TK_TIPO_FLOAT = 261,
-    TK_TIPO_CHAR = 262,
-    TK_TIPO_STRING = 263,
-    TK_TIPO_BOOL = 264,
-    TK_MAIN = 265,
-    TK_ID = 266,
-    TK_TIPO_INT = 267,
-    TK_FIM = 268,
-    TK_ERROR = 269,
-    TK_COMP = 270,
-    TK_LT = 271,
-    TK_GT = 272,
-    TK_LTE = 273,
-    TK_GTE = 274,
-    TK_DIFF = 275,
-    TK_OR = 276,
-    TK_AND = 277,
-    TK_NOT = 278,
-    TK_XOR = 279,
-    TK_EQ = 280,
-    TK_MOD = 281,
-    TK_TIPO_BOOL_TRUE = 282,
-    TK_TIPO_BOOL_FALSE = 283,
-    TK_SHIFT_LEFT = 284,
-    TK_SHIFT_RIGHT = 285,
-    TK_IF = 286,
-    TK_ELSE = 287,
-    TK_WHILE = 288,
-    TK_DO = 289,
-    TK_FOR = 290,
-    TK_BREAK = 291,
-    TK_CONTINUE = 292,
-    TK_PLUS = 293,
-    TK_SUB = 294,
-    TK_MULT = 295,
-    TK_DIV = 296
+    TK_STRING = 261,
+    TK_TIPO_FLOAT = 262,
+    TK_TIPO_CHAR = 263,
+    TK_TIPO_STRING = 264,
+    TK_TIPO_BOOL = 265,
+    TK_MAIN = 266,
+    TK_ID = 267,
+    TK_TIPO_INT = 268,
+    TK_FIM = 269,
+    TK_ERROR = 270,
+    TK_COMP = 271,
+    TK_LT = 272,
+    TK_GT = 273,
+    TK_LTE = 274,
+    TK_GTE = 275,
+    TK_DIFF = 276,
+    TK_OR = 277,
+    TK_AND = 278,
+    TK_NOT = 279,
+    TK_XOR = 280,
+    TK_EQ = 281,
+    TK_MOD = 282,
+    TK_TIPO_BOOL_TRUE = 283,
+    TK_TIPO_BOOL_FALSE = 284,
+    TK_SHIFT_LEFT = 285,
+    TK_SHIFT_RIGHT = 286,
+    TK_IF = 287,
+    TK_ELSE = 288,
+    TK_WHILE = 289,
+    TK_DO = 290,
+    TK_FOR = 291,
+    TK_BREAK = 292,
+    TK_CONTINUE = 293,
+    TK_PLUS = 294,
+    TK_SUB = 295,
+    TK_MULT = 296,
+    TK_DIV = 297
   };
 #endif
 /* Tokens.  */
 #define TK_NUM 258
 #define TK_CHAR 259
 #define TK_REAL 260
-#define TK_TIPO_FLOAT 261
-#define TK_TIPO_CHAR 262
-#define TK_TIPO_STRING 263
-#define TK_TIPO_BOOL 264
-#define TK_MAIN 265
-#define TK_ID 266
-#define TK_TIPO_INT 267
-#define TK_FIM 268
-#define TK_ERROR 269
-#define TK_COMP 270
-#define TK_LT 271
-#define TK_GT 272
-#define TK_LTE 273
-#define TK_GTE 274
-#define TK_DIFF 275
-#define TK_OR 276
-#define TK_AND 277
-#define TK_NOT 278
-#define TK_XOR 279
-#define TK_EQ 280
-#define TK_MOD 281
-#define TK_TIPO_BOOL_TRUE 282
-#define TK_TIPO_BOOL_FALSE 283
-#define TK_SHIFT_LEFT 284
-#define TK_SHIFT_RIGHT 285
-#define TK_IF 286
-#define TK_ELSE 287
-#define TK_WHILE 288
-#define TK_DO 289
-#define TK_FOR 290
-#define TK_BREAK 291
-#define TK_CONTINUE 292
-#define TK_PLUS 293
-#define TK_SUB 294
-#define TK_MULT 295
-#define TK_DIV 296
+#define TK_STRING 261
+#define TK_TIPO_FLOAT 262
+#define TK_TIPO_CHAR 263
+#define TK_TIPO_STRING 264
+#define TK_TIPO_BOOL 265
+#define TK_MAIN 266
+#define TK_ID 267
+#define TK_TIPO_INT 268
+#define TK_FIM 269
+#define TK_ERROR 270
+#define TK_COMP 271
+#define TK_LT 272
+#define TK_GT 273
+#define TK_LTE 274
+#define TK_GTE 275
+#define TK_DIFF 276
+#define TK_OR 277
+#define TK_AND 278
+#define TK_NOT 279
+#define TK_XOR 280
+#define TK_EQ 281
+#define TK_MOD 282
+#define TK_TIPO_BOOL_TRUE 283
+#define TK_TIPO_BOOL_FALSE 284
+#define TK_SHIFT_LEFT 285
+#define TK_SHIFT_RIGHT 286
+#define TK_IF 287
+#define TK_ELSE 288
+#define TK_WHILE 289
+#define TK_DO 290
+#define TK_FOR 291
+#define TK_BREAK 292
+#define TK_CONTINUE 293
+#define TK_PLUS 294
+#define TK_SUB 295
+#define TK_MULT 296
+#define TK_DIV 297
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
