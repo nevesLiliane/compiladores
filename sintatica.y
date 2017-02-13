@@ -50,6 +50,7 @@ tipo_cast cast_possivel(string tipo1, string tipo2, string operador);
 void abrirEscopo();
 void fecharEscopo();
 bool varNoEscopo(string varName);
+bool varNoEscopoAtual(string varName);
 atributos* getVarNoEscopo(string varName);
 string gerarBloco();
 string gerarInicioDeBloco(string l);
@@ -155,7 +156,7 @@ DECLARACAO	: DECLARACAOSIMPLES
 DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
 				  {
 				  		map<string,atributos>* mapa = escopo.front();
-				  		if(varNoEscopo($2.label) == false){
+				  		if(varNoEscopoAtual($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
 				  		} 
@@ -172,7 +173,7 @@ DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
 				  | TK_TIPO_FLOAT TK_ID ';'
 				  {
 				  		map<string,atributos>* mapa = escopo.front();
-				  		if(varNoEscopo($2.label) == false){
+				  		if(varNoEscopoAtual($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
 				  		} 
@@ -189,7 +190,7 @@ DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
 				  | TK_TIPO_CHAR TK_ID ';'
 				  {
 						$$.label = createvar();map<string,atributos>* mapa = escopo.front();
-				  		if(varNoEscopo($2.label) == false){
+				  		if(varNoEscopoAtual($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "char"; 
 				  		}
@@ -205,7 +206,7 @@ DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
 				  | TK_TIPO_BOOL TK_ID ';'
 				  {
 				  		map<string,atributos>* mapa = escopo.front();
-				  		if(varNoEscopo($2.label) == false){
+				  		if(varNoEscopoAtual($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
 				  		}
@@ -222,7 +223,7 @@ DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
 				  | TK_TIPO_STRING TK_ID ';'
 				  {
 				  		map<string,atributos>* mapa = escopo.front();
-				  		if(varNoEscopo($2.label) == false){
+				  		if(varNoEscopoAtual($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "string"; 
 				  			(*mapa)[$2.label].stringDinamica = true; 
@@ -242,7 +243,7 @@ DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
 DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 {
 					 	map<string,atributos>* mapa = escopo.front();
-				  		if(varNoEscopo($2.label) == false){
+				  		if(varNoEscopoAtual($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
 				  		}
@@ -259,7 +260,7 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 {
 					 	$$.label = createvar();
 					 	map<string,atributos>* mapa = escopo.front();
-				  		if(varNoEscopo($2.label) == false){
+				  		if(varNoEscopoAtual($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
 				  		}
@@ -276,7 +277,7 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 | TK_TIPO_FLOAT TK_ID TK_EQ TK_REAL ';'
 					 {
 					 	$$.label = createvar();map<string,atributos>* mapa = escopo.front();
-				  		if(varNoEscopo($2.label) == false){
+				  		if(varNoEscopoAtual($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "float"; 
 				  		}
@@ -292,7 +293,7 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 | TK_TIPO_FLOAT TK_ID TK_EQ NUMEXP ';'
 					 {
 					 	$$.label = createvar();map<string,atributos>* mapa = escopo.front();
-				  		if(varNoEscopo($2.label) == false){
+				  		if(varNoEscopoAtual($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "float"; 
 				  		}
@@ -308,7 +309,7 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 | TK_TIPO_CHAR TK_ID TK_EQ TK_CHAR';'
 					 {
 					 	$$.label = createvar();map<string,atributos>* mapa = escopo.front();
-				  		if(varNoEscopo($2.label) == false){
+				  		if(varNoEscopoAtual($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "char"; 
 				  		}
@@ -325,7 +326,7 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 {
 					 	$$.label = createvar();
 					 	map<string,atributos>* mapa = escopo.front();
-				  		if(varNoEscopo($2.label) == false){
+				  		if(varNoEscopoAtual($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
 				  		}
@@ -342,7 +343,7 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 {
 					 	$$.label = createvar();
 					 	map<string,atributos>* mapa = escopo.front();
-				  		if(varNoEscopo($2.label) == false){
+				  		if(varNoEscopoAtual($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
 				  		}
@@ -359,7 +360,7 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 {
 					 	$$.label = createvar();
 					 	map<string,atributos>* mapa = escopo.front();
-				  		if(varNoEscopo($2.label) == false){
+				  		if(varNoEscopoAtual($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
 				  		}
@@ -379,7 +380,7 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 
 				 		map<string,atributos>* mapa = escopo.front();
 
-				  		if(varNoEscopo($2.label) == false){
+				  		if(varNoEscopoAtual($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "string"; 
 				  			(*mapa)[$2.label].tamanhoString = tamanho;
@@ -1037,6 +1038,12 @@ bool varNoEscopo(string varName){
     }
 
 	return false;
+}
+
+bool varNoEscopoAtual(string varName){
+	map<string,atributos>* m = escopo.front();
+
+	return (*m).find(varName) != (*m).end();
 }
 
 atributos* getVarNoEscopo(string varName){

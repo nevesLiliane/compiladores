@@ -13,6 +13,7 @@ int main()
 		}
 		else
 		{
+			int B = 22;
 			int a = 0;
 			var2 = 44;
 			do
