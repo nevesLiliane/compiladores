@@ -1,3 +1,6 @@
+int variavelEscopoGlobal = 30;
+int var2;
+
 int main()
 {
 	int B = 34;
@@ -11,13 +14,14 @@ int main()
 		else
 		{
 			int a = 0;
-			
+			var2 = 44;
 			do
 			{
 				a = B + 1;
 
 				if(a < 33333)
 				{
+					variavelEscopoGlobal = 90;
 					break;
 				}
 

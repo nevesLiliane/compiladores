@@ -34,6 +34,7 @@ typedef struct _tipo_cast
 map<string, tipo_cast> mapa_cast;
 list < map<string,atributos>* > escopo;
 list<atributos*> estruturasDeRepeticao;
+list<string> erros;
 int contador = 0;
 int numBloco = 0;
 int yylex(void);
@@ -79,9 +80,10 @@ template < typename T > std::string to_string( const T& n );
 
 %%
 
-S 			: ESCOPO_GLOBAL FUNC_MAIN
+S 			: ESCOPO_GLOBAL ESTRUTURA
 			{
-				$$.traducao = $1.traducao;
+				cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\n";
+				cout << $2.traducao;
 			}
 			;
 
@@ -90,9 +92,19 @@ ESCOPO_GLOBAL: {
 				}
 				;
 
+ESTRUTURA 	: DECLARACOES FUNC_MAIN
+			{
+				$$.traducao = $1.traducao + "\n" + $2.traducao;
+			}
+			| FUNC_MAIN
+			{
+				$$.traducao = $1.traducao;
+			}
+			;
+
 FUNC_MAIN 	: TK_TIPO_INT TK_MAIN '(' ')' BLOCO
 			{
-				cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\nint main(void)\n{\n" << $5.traducao << "\treturn 0;\n}" << endl; 
+				$$.traducao = "int main(void)\n{\n" + $5.traducao + "\treturn 0;\n}\n"; 
 			}
 			;
 
@@ -115,8 +127,28 @@ ESCOPO_FIM	: '}'
 			}
 			;
 
+DECLARACOES : DECLARACOES DECLARACAO
+			{
+				$$.traducao = $1.traducao + $2.traducao;
+			}
+			| DECLARACAO
+			{
+				$$.traducao = $1.traducao;
+			}
+			|
+			{
+				$$.traducao = "";
+			}
+			;
+
 DECLARACAO	: DECLARACAOSIMPLES
+			{
+				$$.traducao = $1.traducao;
+			}
 			| DECLARACAOATRIBUICAO
+			{
+				$$.traducao = $1.traducao;
+			}
 			;
 
 DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
@@ -125,6 +157,9 @@ DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
 				  		if(varNoEscopo($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
+				  		} 
+				  		else {
+			  				yyerror("Já existe uma variavel com nome '" + $2.label + "' no escopo.");
 				  		}
 
 				  		$$.tipo = (*mapa)[$2.label].tipo;
@@ -139,6 +174,9 @@ DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
 				  		if(varNoEscopo($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
+				  		} 
+				  		else {
+			  				yyerror("Já existe uma variavel com nome '" + $2.label + "' no escopo.");
 				  		}
 
 				  		$$.tipo = (*mapa)[$2.label].tipo;
@@ -154,6 +192,9 @@ DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "char"; 
 				  		}
+				  		else {
+			  				yyerror("Já existe uma variavel com nome '" + $2.label + "' no escopo.");
+				  		}
 
 					 	$$.label = (*mapa)[$2.label].label;
 					 	$$.tipo = (*mapa)[$2.label].tipo;
@@ -166,6 +207,9 @@ DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
 				  		if(varNoEscopo($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
+				  		}
+				  		else {
+			  				yyerror("Já existe uma variavel com nome '" + $2.label + "' no escopo.");
 				  		}
 
 				  		$$.tipo = (*mapa)[$2.label].tipo;
@@ -181,6 +225,9 @@ DECLARACAOSIMPLES : TK_TIPO_INT TK_ID ';'
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "string"; 
 				  			(*mapa)[$2.label].stringDinamica = true; 
+				  		}
+				  		else {
+			  				yyerror("Já existe uma variavel com nome '" + $2.label + "' no escopo.");
 				  		}
 
 				  		$$.tipo = (*mapa)[$2.label].tipo;
@@ -198,6 +245,9 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
 				  		}
+				  		else {
+			  				yyerror("Já existe uma variavel com nome '" + $2.label + "' no escopo.");
+				  		}
 
 					 	$$.label = (*mapa)[$2.label].label;
 					 	$$.tipo = (*mapa)[$2.label].tipo;
@@ -211,6 +261,9 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 				  		if(varNoEscopo($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
+				  		}
+				  		else {
+			  				yyerror("Já existe uma variavel com nome '" + $2.label + "' no escopo.");
 				  		}
 
 					 	$$.label = (*mapa)[$2.label].label;
@@ -226,6 +279,9 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "float"; 
 				  		}
+				  		else {
+			  				yyerror("Já existe uma variavel com nome '" + $2.label + "' no escopo.");
+				  		}
 
 					 	$$.label = (*mapa)[$2.label].label;
 					 	$$.tipo = (*mapa)[$2.label].tipo;
@@ -239,6 +295,9 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "float"; 
 				  		}
+				  		else {
+			  				yyerror("Já existe uma variavel com nome '" + $2.label + "' no escopo.");
+				  		}
 
 					 	$$.label = (*mapa)[$2.label].label;
 					 	$$.tipo = (*mapa)[$2.label].tipo;
@@ -251,6 +310,9 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 				  		if(varNoEscopo($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "char"; 
+				  		}
+				  		else {
+			  				yyerror("Já existe uma variavel com nome '" + $2.label + "' no escopo.");
 				  		}
 
 					 	$$.label = (*mapa)[$2.label].label;
@@ -266,6 +328,9 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
 				  		}
+				  		else {
+			  				yyerror("Já existe uma variavel com nome '" + $2.label + "' no escopo.");
+				  		}
 
 					 	$$.label = (*mapa)[$2.label].label;
 					 	$$.tipo = (*mapa)[$2.label].tipo;
@@ -280,6 +345,9 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
 				  		}
+				  		else {
+			  				yyerror("Já existe uma variavel com nome '" + $2.label + "' no escopo.");
+				  		}
 
 					 	$$.label = (*mapa)[$2.label].label;
 					 	$$.tipo = (*mapa)[$2.label].tipo;
@@ -293,6 +361,9 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 				  		if(varNoEscopo($2.label) == false){
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "int"; 
+				  		}
+				  		else {
+			  				yyerror("Já existe uma variavel com nome '" + $2.label + "' no escopo.");
 				  		}
 
 					 	$$.label = (*mapa)[$2.label].label;
@@ -311,6 +382,9 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 				  			(*mapa)[$2.label].label = createvar();
 				  			(*mapa)[$2.label].tipo = "string"; 
 				  			(*mapa)[$2.label].tamanhoString = tamanho;
+				  		}
+				  		else {
+			  				yyerror("Já existe uma variavel com nome '" + $2.label + "' no escopo.");
 				  		}
 
 					 	$$.label = (*mapa)[$2.label].label;
@@ -884,7 +958,6 @@ STRINGEXP	: STRINGEXP TK_PLUS STRINGEXP
 			{
 				//Verificando se a variavel existe no escopo corrente
 				$$.label = createvar();
-				cout << "LABEL = " << $$.label << endl;
 				atributos* variavel = getVarNoEscopo($1.label);
 
 		  		if(varNoEscopo($1.label) == false) 
