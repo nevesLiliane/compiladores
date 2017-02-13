@@ -89,6 +89,7 @@ S 			: ESCOPO_GLOBAL ESTRUTURA
 
 ESCOPO_GLOBAL: {
 					abrirEscopo();
+					$$.traducao = "";
 				}
 				;
 
@@ -585,7 +586,7 @@ IF 			: TK_IF '(' BOOLEANEXP ')' BLOCO
 				$$.blocoFim = gerarFimDeBloco($$.jump);
 				$5.isFunction = false;
 				//Se condição for false, usar goto para pular o bloco inteiro de $5
-			    $$.traducao = $3.traducao + "\n\tif (" + $3.label +" == 0) goto " + $$.blocoFim + ";\n" 
+			    $$.traducao = $3.traducao + "\n\tif (" + $3.label +") goto " + $$.blocoFim + ";\n" 
 			    + $5.traducao + "\t" + $$.blocoFim + ":\n";
 			}
 			| TK_IF '(' BOOLEANEXP ')' BLOCO ELSE
@@ -595,7 +596,7 @@ IF 			: TK_IF '(' BOOLEANEXP ')' BLOCO
 				$$.blocoFim = gerarFimDeBloco($$.jump);
 				$5.isFunction = false;
 			    $$.traducao = "\n" + $3.traducao + 
-					 "\n\t" + "if(" + $3.label + " == 0) goto " + $6.blocoIni + ";\n" + 
+					 "\n\t" + "if(" + $3.label + ") goto " + $6.blocoIni + ";\n" + 
 					 $5.traducao + 
 					 "\tgoto " + $6.blocoFim +";\n" +
 					 $6.traducao + 
@@ -629,7 +630,7 @@ WHILE 		: WHILE_LABEL '(' BOOLEANEXP ')' BLOCO
 				$$.jump = att->jump;
 				$$.blocoIni = att->blocoIni;
 				$$.blocoFim = att->blocoFim;
-			    $$.traducao = $3.traducao + "\n\t" + $$.blocoIni + ":\n\tif (" + $3.label +" == 0) goto " + $$.blocoFim + ";\n" 
+			    $$.traducao = $3.traducao + "\n\t" + $$.blocoIni + ":\n\tif (" + $3.label +") goto " + $$.blocoFim + ";\n" 
 			    + $5.traducao + "\n\tgoto " + $$.blocoIni + ";\n\t" + $$.blocoFim + ":\n";
 
 			    estruturasDeRepeticao.pop_front();
@@ -654,7 +655,7 @@ DO 			: DO_LABEL BLOCO TK_WHILE '(' BOOLEANEXP ')' ';'
 				$$.jump = att->jump;
 				$$.blocoIni = att->blocoIni;
 				$$.blocoFim = att->blocoFim;
-			    $$.traducao = "\n\t" + $$.blocoIni + "\n" + $5.traducao + $2.traducao + "\n\tif (" + $5.label + " == 0)" +
+			    $$.traducao = "\n\t" + $$.blocoIni + "\n" + $5.traducao + $2.traducao + "\n\tif (" + $5.label + ")" +
 			    "goto " + $$.blocoFim + ";" + 	"\n\t" + "goto " + $$.blocoIni + ";" + "\n\t" + $$.blocoFim + ":\n";
 			    estruturasDeRepeticao.pop_front();
 			}
@@ -678,7 +679,7 @@ FOR 		:  FOR_LABEL '(' ATRIBUICAO ';' BOOLEANEXP ';' ATRIBUICAO ')' BLOCO
 				$$.blocoIni = att->blocoIni;
 				$$.blocoFim = att->blocoFim;
 				$$.traducao = $3.traducao + "\n\t" + $$.blocoIni + ":\n\t" + $5.traducao + 
-				"\n\tif(" + $5.label + " == 0) goto " + $$.blocoFim + ";\n\t" + $9.traducao + "\n\n" + $7.traducao + 
+				"\n\tif(" + $5.label + ") goto " + $$.blocoFim + ";\n\t" + $9.traducao + "\n\n" + $7.traducao + 
 				"\tgoto " + $$.blocoIni + ";\n\t" + $$.blocoFim + ":\n";
 
 				estruturasDeRepeticao.pop_front();
