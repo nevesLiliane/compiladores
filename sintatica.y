@@ -72,7 +72,8 @@ template < typename T > std::string to_string( const T& n );
 %token TK_EQ TK_MOD
 %token TK_TIPO_BOOL_TRUE TK_TIPO_BOOL_FALSE
 %token TK_SHIFT_LEFT TK_SHIFT_RIGHT
-%token TK_IF TK_ELSE TK_WHILE TK_DO TK_FOR TK_BREAK TK_CONTINUE
+%token TK_IF TK_ELSE TK_WHILE TK_DO TK_FOR TK_BREAK TK_BREAK_ALL TK_CONTINUE TK_ELIF
+%token TK_MAIS_MAIS TK_MENOS_MENOS
 
 %start S
 
@@ -490,6 +491,25 @@ ATRIBUICAO	: TK_ID TK_EQ NUMBER
 
 			 	$$.traducao = $1.traducao + " = '" + $3.traducao + "';\n";
 			}
+			| TK_ID TK_MAIS_MAIS
+			{
+				$$.label = createvar();
+
+		  		if(varNoEscopo($1.label) == false) 
+		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
+
+		  		atributos* varDeclarada = getVarNoEscopo($1.label);
+		  		string tipoAtual = varDeclarada->tipo;
+
+		  		//TODO:Fazer cast implicito se possivel
+		  		if(varDeclarada->tipo != "float" && cast.resultado == "")
+		  			yyerror("Variavel '" + $1.label +"' do tipo " + varDeclarada->tipo + " imcompativel com o tipo float");
+			 	
+			 	if(cast.resultado != varDeclarada->tipo)
+		 			tipoAtual = cast.resultado;
+
+			 	$$.traducao = $1.traducao + " = (" + tipoAtual + ")" + $3.traducao + ";\n";
+			}
 			| TK_ID TK_EQ CAST
 			;
 
@@ -555,6 +575,7 @@ COMANDO 	: E ';'
 			| DO
 			| FOR
 			| BREAK
+			| BREAKALL
 			| CONTINUE
 			;
 
@@ -590,7 +611,7 @@ IF 			: TK_IF '(' BOOLEANEXP ')' BLOCO
 			    $$.traducao = $3.traducao + "\n\tif (" + $3.label +") goto " + $$.blocoFim + ";\n" 
 			    + $5.traducao + "\t" + $$.blocoFim + ":\n";
 			}
-			| TK_IF '(' BOOLEANEXP ')' BLOCO ELSE
+			| TK_IF '(' BOOLEANEXP ')' BLOCO ELSES
 			{
 				$$.jump = gerarBloco();
 				$$.blocoIni = gerarInicioDeBloco($$.jump);
@@ -602,6 +623,29 @@ IF 			: TK_IF '(' BOOLEANEXP ')' BLOCO
 					 "\tgoto " + $6.blocoFim +";\n" +
 					 $6.traducao + 
 					 "\n\t" + $6.blocoFim + ":\n";	
+			}
+			;
+
+ELSES		: ELSE
+			| ELIF
+			;
+
+ELIF 		: TK_ELIF '(' BOOLEANEXP ')' BLOCO
+			{
+				$$.jump = gerarBloco();
+				$$.blocoIni = gerarInicioDeBloco($$.jump);
+				$$.blocoFim = gerarFimDeBloco($$.jump);
+				$$.traducao = "\n\t" + $$.blocoIni + ":\n" + $3.traducao + "\n\tif(" + $3.label + ") goto " + $$.blocoFim +
+				";\n" + $5.traducao + "\n\t" + $$.blocoFim + ":";
+			}
+			|
+			TK_ELIF '(' BOOLEANEXP ')' BLOCO ELSES
+			{
+				$$.jump = gerarBloco();
+				$$.blocoIni = gerarInicioDeBloco($$.jump);
+				$$.blocoFim = gerarFimDeBloco($$.jump);
+				$$.traducao = "\n\t" + $$.blocoIni + ":\n" + $3.traducao + "\n\tif(" + $3.label + ") goto " + $6.blocoIni +
+				";\n" + $5.traducao + "\n\tgoto " + $6.blocoFim + ";\n" + $6.traducao + "\n\t" + $6.blocoFim + ":\n";
 			}
 			;
 
@@ -704,6 +748,16 @@ BREAK 		: TK_BREAK ';'
 					yyerror("Não e possivel usar o comando 'break' fora de blocos 'for', 'while' e 'do/while'.");
 
 				atributos * att = estruturasDeRepeticao.front();
+				$$.traducao = "\n\tgoto " + att->blocoFim + ";\n";
+			}
+			;
+
+BREAKALL 	: TK_BREAK_ALL ';'
+			{
+				if(estruturasDeRepeticao.size() < 1)
+					yyerror("Não e possivel usar o comando 'breakall' fora de blocos 'for', 'while' e 'do/while'.");
+
+				atributos *att = estruturasDeRepeticao.back();
 				$$.traducao = "\n\tgoto " + att->blocoFim + ";\n";
 			}
 			;

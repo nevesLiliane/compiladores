@@ -59,11 +59,16 @@ STRING 		\'{DELIM}*{CARACTERE}+({DELIM}*{CARACTERE}+)*{DELIM}*\'|\"{DELIM}*{CARA
 
 "if"		{ return TK_IF; }
 "else"		{ return TK_ELSE; }
+"elif"		{ return TK_ELIF; }
 "while"		{ return TK_WHILE; }
 "do"		{ return TK_DO; }
 "for"		{ return TK_FOR; }
 "break"		{ return TK_BREAK; }
+"breakall"	{ return TK_BREAK_ALL; }
 "continue"	{ return TK_CONTINUE; }
+
+"++"		{ return TK_MAIS_MAIS; }
+"--"		{ return TK_MENOS_MENOS; }
 
 {NUM}		{ yylval.traducao = yytext; return TK_NUM; }
 {ID}		{ yylval.label = yytext; return TK_ID; }

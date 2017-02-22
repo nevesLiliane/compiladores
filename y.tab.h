@@ -80,11 +80,13 @@ extern int yydebug;
     TK_DO = 290,
     TK_FOR = 291,
     TK_BREAK = 292,
-    TK_CONTINUE = 293,
-    TK_PLUS = 294,
-    TK_SUB = 295,
-    TK_MULT = 296,
-    TK_DIV = 297
+    TK_BREAK_ALL = 293,
+    TK_CONTINUE = 294,
+    TK_ELIF = 295,
+    TK_PLUS = 296,
+    TK_SUB = 297,
+    TK_MULT = 298,
+    TK_DIV = 299
   };
 #endif
 /* Tokens.  */
@@ -123,11 +125,13 @@ extern int yydebug;
 #define TK_DO 290
 #define TK_FOR 291
 #define TK_BREAK 292
-#define TK_CONTINUE 293
-#define TK_PLUS 294
-#define TK_SUB 295
-#define TK_MULT 296
-#define TK_DIV 297
+#define TK_BREAK_ALL 293
+#define TK_CONTINUE 294
+#define TK_ELIF 295
+#define TK_PLUS 296
+#define TK_SUB 297
+#define TK_MULT 298
+#define TK_DIV 299
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED

@@ -23,6 +23,10 @@ int main()
 				if(a < 33333)
 				{
 					variavelEscopoGlobal = 90;
+					breakall;
+				}
+				elif(a > 9876)
+				{
 					break;
 				}
 
