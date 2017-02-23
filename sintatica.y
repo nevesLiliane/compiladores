@@ -4,7 +4,8 @@
 #include <sstream>
 #include <fstream>
 #include <map>
-#include <list> 
+#include <list>
+#include <vector> 
 
 #define YYSTYPE atributos
 
@@ -20,6 +21,7 @@ struct atributos
 	string blocoIni;
 	string blocoFim;
 	bool isFunction;
+	bool isArray
 	bool stringDinamica;
 	int tamanhoString;
 };
@@ -79,6 +81,7 @@ template < typename T > std::string to_string( const T& n );
 %token TK_IF TK_ELSE TK_WHILE TK_DO TK_FOR TK_BREAK TK_BREAK_ALL TK_CONTINUE TK_ELIF
 %token TK_MAIS_MAIS TK_MENOS_MENOS TK_MAIS_COMPOSTO TK_MENOS_COMPOSTO TK_MULT_COMPOSTO TK_DIV_COMPOSTO
 %token TK_SWITCH TK_CASE TK_DEFAULT TK_DOIS_PONTOS
+%token TK_WRITE TK_READ
 %token TK_ANY
 
 %start S
@@ -90,7 +93,7 @@ template < typename T > std::string to_string( const T& n );
 
 S 			: ESCOPO_GLOBAL ESTRUTURA
 			{
-				cout << "/*Compilador FOCA*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\n";
+				cout << "/*Compilador AHHH*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\n";
 				cout << $2.traducao;
 			}
 			;
@@ -121,7 +124,7 @@ BLOCO		: ESCOPO_INI COMANDOS ESCOPO_FIM
 			{
 				$$.traducao = $2.traducao;
 			}
-			;
+			;		
 ESCOPO_INI	: '{'
 			{
 				abrirEscopo();
@@ -730,6 +733,8 @@ COMANDO 	: E ';'
 			| BREAK
 			| BREAKALL
 			| CONTINUE
+			| WRITE
+			| READ
 			;
 
 E 			: NUMEXP
@@ -753,7 +758,17 @@ E 			: NUMEXP
 				$$.tipo = $1.tipo;
 			}
 			;
-
+WRITE		: TK_WRITE '(' E ')'	
+			{
+				$$.traducao = $3.traducao + "\tcout << " + $3.label +" << endl;\n";
+			}
+			;
+READ 		: TK_READ '(' TK_ID ')'
+			{
+				atributos* atrib = getVarNoEscopo($3.label);
+				$$.traducao = "\tcin >> " + atrib->label + ";\n";
+			}
+			;
 IF 			: TK_IF '(' BOOLEANEXP ')' BLOCO
 			{
 				$$.jump = gerarBloco();

@@ -34,6 +34,9 @@ STRING 		\'{DELIM}*{CARACTERE}+({DELIM}*{CARACTERE}+)*{DELIM}*\'|\"{DELIM}*{CARA
 "true"		{ return TK_TIPO_BOOL_TRUE; }
 "false"		{ return TK_TIPO_BOOL_FALSE; }
 
+"read"			{ return TK_READ; }
+"write"			{ return TK_WRITE; }
+
 [(){}[\];,]	{ return *yytext; }
 
 "+"			{ return TK_PLUS; }

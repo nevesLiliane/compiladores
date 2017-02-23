@@ -43,6 +43,7 @@ int main()
 		}
 	}
 
+	read(B);
 	switch(B)
 	{
 		case 32:
@@ -66,4 +67,5 @@ int main()
 	string minhaString = "la, ";
 	string outraString = minhaString + "tudo bem";
 	final = "O" + minhaString + outraString;
+	write(final);
 }
