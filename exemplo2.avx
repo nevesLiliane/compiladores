@@ -1,0 +1,21 @@
+any glob = 12;
+
+int main () {
+	any inner = 5.3;
+
+	while (inner < glob) {
+		if(inner < 5) {
+			inner+=2;
+		}
+		elif(inner>=5 && inner < 10) {
+			inner++;
+		}
+		else {
+			inner = glob/2;
+		}
+
+		int x = inner+glob*2;
+		int y = 3+(inner+glob)/2;
+		
+	}
+}

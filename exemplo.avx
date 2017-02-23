@@ -1,0 +1,70 @@
+int variavelEscopoGlobal = 30;
+int var2;
+
+int main()
+{
+	any B = 34;
+	any X = 32.0423;
+	any Y = 'C';
+	any Z = "String feliz";
+
+	while(B > 232)
+	{
+		if(B > 25)
+		{
+			int a = 7 + 11;
+		}
+		else
+		{
+			any B = 22;
+			int a = 0;
+			var2 = 44;
+			do
+			{
+				a = B + 1;
+
+				if(a < 33333)
+				{
+					B += 23 + 24 + a;
+					B -= 23 + 24 + a;
+					B *= 23 + 24 + a;
+					B /= 23 + 24 + a;
+					variavelEscopoGlobal = 90;
+					a = a++ + --a;
+					a++;
+					breakall;
+				}
+				elif(a > 9876)
+				{
+					write(a+21);
+					break;
+				}
+
+			} while (a < 3);
+		}
+	}
+	switch(B)
+	{
+		case 32:
+			B = B + 12345;
+		case 45:
+			B = B + 23456;
+		default:
+			B = B + 56789;
+	}
+
+	for(B = 0; B < 5; B = B + 1)
+	{
+		int x = 99999;
+		if(x + B < 777)
+		{
+			break;
+		}
+	}
+
+	string final;
+	string minhaString = "la, ";
+	string outraString = minhaString + "tudo bem";
+	final = "O" + minhaString + outraString;
+	write("final" + final);
+}

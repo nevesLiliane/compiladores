@@ -1,0 +1,6 @@
+int main() {
+	any x = 1;
+	any f = 1.1;
+	any res = x + f;
+	write(res);
+}

@@ -21,7 +21,7 @@ struct atributos
 	string blocoIni;
 	string blocoFim;
 	bool isFunction;
-	bool isArray
+	bool isArray;
 	bool stringDinamica;
 	int tamanhoString;
 };
@@ -88,12 +88,13 @@ template < typename T > std::string to_string( const T& n );
 
 %left TK_PLUS TK_SUB
 %left TK_MULT TK_DIV
+%left '(' ')'
 
 %%
 
 S 			: ESCOPO_GLOBAL ESTRUTURA
 			{
-				cout << "/*Compilador AHHH*/\n" << "#include <iostream>\n#include<string.h>\n#include<stdio.h>\n";
+				cout << "/*Compilador AVX*/\n" << "#include <iostream>\n#include <string.h>\n#include <stdio.h>\n#include <stdlib.h>\n\nusing namespace std;\n\n";
 				cout << $2.traducao;
 			}
 			;
@@ -667,6 +668,8 @@ ATRIBUICAO	: TK_ID TK_EQ NUMBER
 			}
 			| TK_ID TK_EQ CAST
 			;
+
+
 
 CAST 		: '(' TIPO ')' TK_ID
 			{
