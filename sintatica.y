@@ -491,25 +491,6 @@ ATRIBUICAO	: TK_ID TK_EQ NUMBER
 
 			 	$$.traducao = $1.traducao + " = '" + $3.traducao + "';\n";
 			}
-			| TK_ID TK_MAIS_MAIS
-			{
-				$$.label = createvar();
-
-		  		if(varNoEscopo($1.label) == false) 
-		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
-
-		  		atributos* varDeclarada = getVarNoEscopo($1.label);
-		  		string tipoAtual = varDeclarada->tipo;
-
-		  		//TODO:Fazer cast implicito se possivel
-		  		if(varDeclarada->tipo != "float" && cast.resultado == "")
-		  			yyerror("Variavel '" + $1.label +"' do tipo " + varDeclarada->tipo + " imcompativel com o tipo float");
-			 	
-			 	if(cast.resultado != varDeclarada->tipo)
-		 			tipoAtual = cast.resultado;
-
-			 	$$.traducao = $1.traducao + " = (" + tipoAtual + ")" + $3.traducao + ";\n";
-			}
 			| TK_ID TK_EQ CAST
 			;
 
@@ -974,6 +955,110 @@ NUMEXP		: '(' NUMEXP ')'
 				$$.tipo = mapa_cast[gera_chave($1.tipo, $3.tipo, ">>")].resultado;
 				$$.label = createvar();
 				$$.traducao = $1.traducao + $3.traducao + "\t" + $$.tipo + " " + $$.label + " = " + $1.label + " >> " + $3.label + ";\n";
+			}
+			| TK_ID TK_MAIS_MAIS
+			{
+				$$.label = createvar();
+
+		  		if(varNoEscopo($1.label) == false) 
+		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
+
+		  		atributos* varDeclarada = getVarNoEscopo($1.label);
+		  		string tipoAtual = varDeclarada->tipo;
+
+		  		//TODO:Fazer cast implicito se possivel
+		  		if(varDeclarada->tipo != "int" && varDeclarada->tipo != "float")
+		  			yyerror("Variavel '" + $1.label +"' do tipo " + varDeclarada->tipo + " não pode ser convertida para numero");
+
+			 	if(varDeclarada->tipo == "int")
+		 		{
+		 			$$.traducao = "\t" + $$.label + " = " + varDeclarada->label + ";\n\t" + varDeclarada->label 
+		 			+ " = " + varDeclarada->label + " + 1;\n";
+		 		}
+		 		else
+		 		{
+		 			$$.traducao = "\t" + $$.label + " = " + varDeclarada->label + ";\n\t" + varDeclarada->label 
+		 			+ " = " + varDeclarada->label + " + 1.0;\n";
+		 		}
+
+		 		$$.tipo = varDeclarada->tipo;
+			}
+			| TK_ID TK_MENOS_MENOS
+			{
+				$$.label = createvar();
+
+		  		if(varNoEscopo($1.label) == false) 
+		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
+
+		  		atributos* varDeclarada = getVarNoEscopo($1.label);
+		  		string tipoAtual = varDeclarada->tipo;
+
+		  		//TODO:Fazer cast implicito se possivel
+		  		if(varDeclarada->tipo != "int" && varDeclarada->tipo != "float")
+		  			yyerror("Variavel '" + $1.label +"' do tipo " + varDeclarada->tipo + " não pode ser convertida para numero");
+
+			 	if(varDeclarada->tipo == "int")
+		 		{
+		 			$$.traducao = "\t" + $$.label + " = " + varDeclarada->label + ";\n\t" + varDeclarada->label + " = " 
+		 			+ varDeclarada->label + " - 1;\n";
+		 		}
+		 		else
+		 		{
+		 			$$.traducao = "\t" + $$.label + " = " + varDeclarada->label + ";\n\t" + varDeclarada->label 
+		 			+ " = " + varDeclarada->label + " - 1.0;\n";
+		 		}
+
+		 		$$.tipo = varDeclarada->tipo;
+			}
+			| TK_MAIS_MAIS TK_ID
+			{
+				$$.label = createvar();
+
+		  		if(varNoEscopo($1.label) == false) 
+		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
+
+		  		atributos* varDeclarada = getVarNoEscopo($1.label);
+		  		string tipoAtual = varDeclarada->tipo;
+
+		  		//TODO:Fazer cast implicito se possivel
+		  		if(varDeclarada->tipo != "int" && varDeclarada->tipo != "float")
+		  			yyerror("Variavel '" + $1.label +"' do tipo " + varDeclarada->tipo + " não pode ser convertida para numero");
+
+			 	if(varDeclarada->tipo == "int")
+		 		{
+		 			$$.traducao = "\t" + varDeclarada->label + " = " + varDeclarada->label + " + 1;\n\t" + $$.label + " = " + varDeclarada->label + "\n";
+		 		}
+		 		else
+		 		{
+		 			$$.traducao = "\t" + varDeclarada->label + " = " + varDeclarada->label + " + 1.0;\n\t" + $$.label + " = " + varDeclarada->label + "\n";
+		 		}
+
+		 		$$.tipo = varDeclarada->tipo;
+			}
+			| TK_MENOS_MENOS TK_ID
+			{
+				$$.label = createvar();
+
+		  		if(varNoEscopo($1.label) == false) 
+		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
+
+		  		atributos* varDeclarada = getVarNoEscopo($1.label);
+		  		string tipoAtual = varDeclarada->tipo;
+
+		  		//TODO:Fazer cast implicito se possivel
+		  		if(varDeclarada->tipo != "int" && varDeclarada->tipo != "float")
+		  			yyerror("Variavel '" + $1.label +"' do tipo " + varDeclarada->tipo + " não pode ser convertida para numero");
+
+			 	if(varDeclarada->tipo == "int")
+		 		{
+		 			$$.traducao = "\t" + varDeclarada->label + " = " + varDeclarada->label + " - 1;\n\t" + $$.label + " = " + varDeclarada->label + "\n";
+		 		}
+		 		else
+		 		{
+		 			$$.traducao = "\t" + varDeclarada->label + " = " + varDeclarada->label + " - 1.0;\n\t" + $$.label + " = " + varDeclarada->label + "\n";
+		 		}
+
+		 		$$.tipo = varDeclarada->tipo;
 			}
 			| NUMBER
 			{

@@ -83,10 +83,12 @@ extern int yydebug;
     TK_BREAK_ALL = 293,
     TK_CONTINUE = 294,
     TK_ELIF = 295,
-    TK_PLUS = 296,
-    TK_SUB = 297,
-    TK_MULT = 298,
-    TK_DIV = 299
+    TK_MAIS_MAIS = 296,
+    TK_MENOS_MENOS = 297,
+    TK_PLUS = 298,
+    TK_SUB = 299,
+    TK_MULT = 300,
+    TK_DIV = 301
   };
 #endif
 /* Tokens.  */
@@ -128,10 +130,12 @@ extern int yydebug;
 #define TK_BREAK_ALL 293
 #define TK_CONTINUE 294
 #define TK_ELIF 295
-#define TK_PLUS 296
-#define TK_SUB 297
-#define TK_MULT 298
-#define TK_DIV 299
+#define TK_MAIS_MAIS 296
+#define TK_MENOS_MENOS 297
+#define TK_PLUS 298
+#define TK_SUB 299
+#define TK_MULT 300
+#define TK_DIV 301
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
