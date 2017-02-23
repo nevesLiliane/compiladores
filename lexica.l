@@ -43,6 +43,8 @@ STRING 		\'{DELIM}*{CARACTERE}+({DELIM}*{CARACTERE}+)*{DELIM}*\'|\"{DELIM}*{CARA
 "="			{ return TK_EQ; }
 "%"			{ return TK_MOD; }
 
+":"			{ return TK_DOIS_PONTOS; }
+
 "=="		{ return TK_COMP; }
 "<"			{ return TK_LT; }
 ">"			{ return TK_GT; }
@@ -66,6 +68,10 @@ STRING 		\'{DELIM}*{CARACTERE}+({DELIM}*{CARACTERE}+)*{DELIM}*\'|\"{DELIM}*{CARA
 "break"		{ return TK_BREAK; }
 "breakall"	{ return TK_BREAK_ALL; }
 "continue"	{ return TK_CONTINUE; }
+"switch"	{ return TK_SWITCH; }
+"case"		{ return TK_CASE; }
+"default"	{ return TK_DEFAULT; }
+"any"		{ return TK_ANY; }
 
 "++"		{ return TK_MAIS_MAIS; }
 "--"		{ return TK_MENOS_MENOS; }

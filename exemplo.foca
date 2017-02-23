@@ -3,9 +3,12 @@ int var2;
 
 int main()
 {
-	int B = 34;
+	any B = 34;
+	any X = 32.0423;
+	any Y = 'C';
+	any Z = "String feliz";
 
-	while(true)
+	while(B > 232)
 	{
 		if(B > 25)
 		{
@@ -13,7 +16,7 @@ int main()
 		}
 		else
 		{
-			int B = 22;
+			any B = 22;
 			int a = 0;
 			var2 = 44;
 			do
@@ -38,6 +41,16 @@ int main()
 
 			} while (a < 3);
 		}
+	}
+
+	switch(B)
+	{
+		case 32:
+			B = B + 12345;
+		case 45:
+			B = B + 23456;
+		default:
+			B = B + 56789;
 	}
 
 	for(B = 0; B < 5; B = B + 1)

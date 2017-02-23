@@ -34,6 +34,10 @@ typedef struct _tipo_cast
 map<string, tipo_cast> mapa_cast;
 list < map<string,atributos>* > escopo;
 list<atributos*> estruturasDeRepeticao;
+list<atributos*> caseTemp;
+list<string> caseLabel;
+list<string> caseLabelTemp;
+list<string> caseTraducao;
 list<string> erros;
 int contador = 0;
 int numBloco = 0;
@@ -74,6 +78,8 @@ template < typename T > std::string to_string( const T& n );
 %token TK_SHIFT_LEFT TK_SHIFT_RIGHT
 %token TK_IF TK_ELSE TK_WHILE TK_DO TK_FOR TK_BREAK TK_BREAK_ALL TK_CONTINUE TK_ELIF
 %token TK_MAIS_MAIS TK_MENOS_MENOS TK_MAIS_COMPOSTO TK_MENOS_COMPOSTO TK_MULT_COMPOSTO TK_DIV_COMPOSTO
+%token TK_SWITCH TK_CASE TK_DEFAULT TK_DOIS_PONTOS
+%token TK_ANY
 
 %start S
 
@@ -398,6 +404,27 @@ DECLARACAOATRIBUICAO : TK_TIPO_INT TK_ID TK_EQ TK_NUM ';'
 					 	$$.traducao = $4.traducao + "\tchar " + $$.label + "[" + to_string(tamanho) + "];\n\t" + "strncpy(" +
 					 	$$.label + "," + $4.label + "," + to_string(tamanho) + ");\n";
 					 }
+					 | TK_ANY TK_ID TK_EQ E ';'
+					 {
+					 	$$.label = createvar();
+					 	map<string,atributos>* mapa = escopo.front();
+				  		if(varNoEscopoAtual($2.label) == false){
+				  			(*mapa)[$2.label].label = createvar();
+				  			(*mapa)[$2.label].tipo = $4.tipo;
+				  		}
+				  		else {
+			  				yyerror("Já existe uma variavel com nome '" + $2.label + "' no escopo.");
+				  		}
+
+					 	$$.label = (*mapa)[$2.label].label;
+					 	$$.tipo = (*mapa)[$2.label].tipo;
+					 	$2.label = (*mapa)[$2.label].label;
+					 	string tipo = $4.tipo;
+					 	if(tipo == "boolean")
+					 		tipo = "int";
+
+					 	$$.traducao = $4.traducao + "\t" + tipo + " " + $$.label + " = " + $4.label + ";\n";
+					 }
 					 ;
 
 ATRIBUICAO	: TK_ID TK_EQ NUMBER
@@ -699,6 +726,7 @@ COMANDO 	: E ';'
 			| WHILE
 			| DO
 			| FOR
+			| SWITCH
 			| BREAK
 			| BREAKALL
 			| CONTINUE
@@ -752,7 +780,13 @@ IF 			: TK_IF '(' BOOLEANEXP ')' BLOCO
 			;
 
 ELSES		: ELSE
+			{
+				$$.traducao = $1.traducao;
+			}
 			| ELIF
+			{
+				$$.traducao = $1.traducao;
+			}
 			;
 
 ELIF 		: TK_ELIF '(' BOOLEANEXP ')' BLOCO
@@ -867,6 +901,90 @@ FOR_LABEL	: TK_FOR
 			}
 			;
 
+SWITCH 		: SWITCH_LABEL '(' E ')' '{' CASES '}'
+			{
+				list<string>::iterator i;
+				$$.traducao = "";
+				atributos* att = estruturasDeRepeticao.front();
+	
+				for(i = caseLabel.begin(); i != caseLabel.end(); i++)
+				{
+					$$.traducao += caseTraducao.front() + "\n\t" + caseLabelTemp.front() + " = " + $3.label + " == " + *i + ";\n";
+					caseLabelTemp.pop_front();
+					caseTraducao.pop_front();
+				}
+				
+				
+				$$.traducao += "\n" + $6.traducao + "\n\t" + att->blocoFim + ":\n";
+				estruturasDeRepeticao.pop_front();
+				caseLabel.clear();
+			}
+			;
+
+CASES 		: CASE CASES
+			{
+				$$.traducao = $1.traducao + "\n" + $2.traducao;
+			}
+			| CASE
+			{
+				$$.traducao = $1.traducao;
+			}
+			| DEFAULT
+			{
+				$$.traducao = $1.traducao;
+			}
+			|
+			{
+				$$.traducao = "";
+			}
+			;
+
+CASE 		: CASE_LABEL E TK_DOIS_PONTOS COMANDOS
+			{
+				string label = createvar();
+				atributos* att = estruturasDeRepeticao.front();
+
+				caseLabelTemp.push_front(label);
+				caseLabel.push_front($2.label);
+				caseTraducao.push_front($2.traducao);
+
+				$$.traducao += "\n\tif (!" + caseLabelTemp.front() +") goto " + att->blocoFim + ";\n\n" 
+				+ $4.traducao + "\n\n\t" + att->blocoFim + ":\n";
+
+				estruturasDeRepeticao.pop_front();
+			}
+			;
+
+DEFAULT 	: TK_DEFAULT TK_DOIS_PONTOS COMANDOS
+			{
+				$$.traducao = $3.traducao;
+			}
+			;
+
+CASE_LABEL	: TK_CASE
+			{
+				atributos* att = new atributos;
+				att->jump = gerarBloco();
+				att->blocoIni = gerarInicioDeBloco(att->jump);
+				att->blocoFim = gerarFimDeBloco(att->jump);
+				att->tipo = "case";
+				estruturasDeRepeticao.push_front(att);
+				$$.traducao = "";
+			}
+			;
+
+SWITCH_LABEL: TK_SWITCH
+			{
+				atributos* att = new atributos;
+				att->jump = gerarBloco();
+				att->blocoIni = gerarInicioDeBloco(att->jump);
+				att->blocoFim = gerarFimDeBloco(att->jump);
+				att->tipo = "switch";
+				estruturasDeRepeticao.push_front(att);
+				$$.traducao = "";
+			}
+			;
+
 BREAK 		: TK_BREAK ';'
 			{
 				if(estruturasDeRepeticao.size() < 1)
@@ -958,6 +1076,18 @@ BOOLEANEXP	: '(' BOOLEANEXP ')'
 				$$.label = createvar();
 				$$.tipo = "boolean";
 				$$.traducao = $3.traducao + "\tint " + $$.label + " = " + $3.label + " == 0;\n";
+			}
+			| TK_ID
+			{
+				//Verificando se a variavel existe no escopo corrente
+				$$.label = createvar();
+				atributos* variavel = getVarNoEscopo($1.label);
+
+		  		if(varNoEscopo($1.label) == false) 
+		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
+
+		  		$$.traducao = "\tint " + $$.label + " = " + variavel->label + ";\n";
+		  		$$.tipo = variavel->tipo;
 			}
 			| LOGICALEXP
 			{
@@ -1170,11 +1300,11 @@ NUMEXP		: '(' NUMEXP ')'
 
 			 	if(varDeclarada->tipo == "int")
 		 		{
-		 			$$.traducao = "\t" + varDeclarada->label + " = " + varDeclarada->label + " + 1;\n\t" + $$.label + " = " + varDeclarada->label + "\n";
+		 			$$.traducao = "\t" + varDeclarada->label + " = " + varDeclarada->label + " + 1;\n\t" + $$.label + " = " + varDeclarada->label + ";\n";
 		 		}
 		 		else
 		 		{
-		 			$$.traducao = "\t" + varDeclarada->label + " = " + varDeclarada->label + " + 1.0;\n\t" + $$.label + " = " + varDeclarada->label + "\n";
+		 			$$.traducao = "\t" + varDeclarada->label + " = " + varDeclarada->label + " + 1.0;\n\t" + $$.label + " = " + varDeclarada->label + ";\n";
 		 		}
 
 		 		$$.tipo = varDeclarada->tipo;
@@ -1195,11 +1325,11 @@ NUMEXP		: '(' NUMEXP ')'
 
 			 	if(varDeclarada->tipo == "int")
 		 		{
-		 			$$.traducao = "\t" + varDeclarada->label + " = " + varDeclarada->label + " - 1;\n\t" + $$.label + " = " + varDeclarada->label + "\n";
+		 			$$.traducao = "\t" + varDeclarada->label + " = " + varDeclarada->label + " - 1;\n\t" + $$.label + " = " + varDeclarada->label + ";\n";
 		 		}
 		 		else
 		 		{
-		 			$$.traducao = "\t" + varDeclarada->label + " = " + varDeclarada->label + " - 1.0;\n\t" + $$.label + " = " + varDeclarada->label + "\n";
+		 			$$.traducao = "\t" + varDeclarada->label + " = " + varDeclarada->label + " - 1.0;\n\t" + $$.label + " = " + varDeclarada->label + ";\n";
 		 		}
 
 		 		$$.tipo = varDeclarada->tipo;

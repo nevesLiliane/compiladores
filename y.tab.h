@@ -89,10 +89,15 @@ extern int yydebug;
     TK_MENOS_COMPOSTO = 299,
     TK_MULT_COMPOSTO = 300,
     TK_DIV_COMPOSTO = 301,
-    TK_PLUS = 302,
-    TK_SUB = 303,
-    TK_MULT = 304,
-    TK_DIV = 305
+    TK_SWITCH = 302,
+    TK_CASE = 303,
+    TK_DEFAULT = 304,
+    TK_DOIS_PONTOS = 305,
+    TK_ANY = 306,
+    TK_PLUS = 307,
+    TK_SUB = 308,
+    TK_MULT = 309,
+    TK_DIV = 310
   };
 #endif
 /* Tokens.  */
@@ -140,10 +145,15 @@ extern int yydebug;
 #define TK_MENOS_COMPOSTO 299
 #define TK_MULT_COMPOSTO 300
 #define TK_DIV_COMPOSTO 301
-#define TK_PLUS 302
-#define TK_SUB 303
-#define TK_MULT 304
-#define TK_DIV 305
+#define TK_SWITCH 302
+#define TK_CASE 303
+#define TK_DEFAULT 304
+#define TK_DOIS_PONTOS 305
+#define TK_ANY 306
+#define TK_PLUS 307
+#define TK_SUB 308
+#define TK_MULT 309
+#define TK_DIV 310
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
