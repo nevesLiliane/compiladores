@@ -73,7 +73,7 @@ template < typename T > std::string to_string( const T& n );
 %token TK_TIPO_BOOL_TRUE TK_TIPO_BOOL_FALSE
 %token TK_SHIFT_LEFT TK_SHIFT_RIGHT
 %token TK_IF TK_ELSE TK_WHILE TK_DO TK_FOR TK_BREAK TK_BREAK_ALL TK_CONTINUE TK_ELIF
-%token TK_MAIS_MAIS TK_MENOS_MENOS
+%token TK_MAIS_MAIS TK_MENOS_MENOS TK_MAIS_COMPOSTO TK_MENOS_COMPOSTO TK_MULT_COMPOSTO TK_DIV_COMPOSTO
 
 %start S
 
@@ -490,6 +490,150 @@ ATRIBUICAO	: TK_ID TK_EQ NUMBER
 		  			yyerror("Variavel '" + $1.label +"' do tipo " + varDeclarada->tipo + " imcompativel com o tipo char");
 
 			 	$$.traducao = $1.traducao + " = '" + $3.traducao + "';\n";
+			}
+			| TK_ID TK_MAIS_COMPOSTO E 
+			{
+				$$.label = createvar();
+				bool castImplicito = false;
+
+		  		if(varNoEscopo($1.label) == false) 
+		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
+
+		  		atributos* varDeclarada = getVarNoEscopo($1.label);
+		  		string tipoAtual = varDeclarada->tipo;
+
+		  		tipo_cast cast = cast_possivel(varDeclarada->tipo, $3.tipo, "=");
+
+		  		//TODO:Fazer cast implicito se possivel
+		  		if(varDeclarada->tipo != $3.tipo && cast.resultado == "")
+		  			yyerror("Variavel '" + $1.label +"' do tipo " + varDeclarada->tipo + " imcompativel com o tipo " + $3.tipo);
+			 	
+			 	if(cast.resultado != varDeclarada->tipo && varDeclarada->tipo != "string")
+			 	{
+		 			tipoAtual = cast.resultado;
+		 			castImplicito = true;
+			 	}
+			 	
+			 	if(castImplicito)
+			 	{
+			 		string tempVar = createvar();
+			 		$$.traducao = $3.traducao + "\n\t" + tempVar + " = (" + tipoAtual + ") " + $3.label + ";\n\t"
+			 		+ varDeclarada->label + " = " + varDeclarada->label + " + " + tempVar + ";\n";
+			 	}
+			 	else
+			 	{
+			 		string tempVar = createvar();
+		 			$$.traducao = $3.traducao + "\n\t" + tempVar + " = " + $3.label + ";\n\t" 
+		 			+ varDeclarada->label + " = " + varDeclarada->label + " + " + tempVar + ";\n";
+			 	}
+			}
+			| TK_ID TK_MENOS_COMPOSTO E 
+			{
+				$$.label = createvar();
+				bool castImplicito = false;
+
+		  		if(varNoEscopo($1.label) == false) 
+		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
+
+		  		atributos* varDeclarada = getVarNoEscopo($1.label);
+		  		string tipoAtual = varDeclarada->tipo;
+
+		  		tipo_cast cast = cast_possivel(varDeclarada->tipo, $3.tipo, "=");
+
+		  		//TODO:Fazer cast implicito se possivel
+		  		if(varDeclarada->tipo != $3.tipo && cast.resultado == "")
+		  			yyerror("Variavel '" + $1.label +"' do tipo " + varDeclarada->tipo + " imcompativel com o tipo " + $3.tipo);
+			 	
+			 	if(cast.resultado != varDeclarada->tipo && varDeclarada->tipo != "string")
+			 	{
+		 			tipoAtual = cast.resultado;
+		 			castImplicito = true;
+			 	}
+			 	
+			 	if(castImplicito)
+			 	{
+			 		string tempVar = createvar();
+			 		$$.traducao = $3.traducao + "\n\t" + tempVar + " = (" + tipoAtual + ") " + $3.label + ";\n\t"
+			 		+ varDeclarada->label + " = " + varDeclarada->label + " - " + tempVar + ";\n";
+			 	}
+			 	else
+			 	{
+			 		string tempVar = createvar();
+		 			$$.traducao = $3.traducao + "\n\t" + tempVar + " = " + $3.label + ";\n\t" 
+		 			+ varDeclarada->label + " = " + varDeclarada->label + " - " + tempVar + ";\n";
+			 	}
+			}
+			| TK_ID TK_MULT_COMPOSTO E 
+			{
+				$$.label = createvar();
+				bool castImplicito = false;
+
+		  		if(varNoEscopo($1.label) == false) 
+		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
+
+		  		atributos* varDeclarada = getVarNoEscopo($1.label);
+		  		string tipoAtual = varDeclarada->tipo;
+
+		  		tipo_cast cast = cast_possivel(varDeclarada->tipo, $3.tipo, "=");
+
+		  		//TODO:Fazer cast implicito se possivel
+		  		if(varDeclarada->tipo != $3.tipo && cast.resultado == "")
+		  			yyerror("Variavel '" + $1.label +"' do tipo " + varDeclarada->tipo + " imcompativel com o tipo " + $3.tipo);
+			 	
+			 	if(cast.resultado != varDeclarada->tipo && varDeclarada->tipo != "string")
+			 	{
+		 			tipoAtual = cast.resultado;
+		 			castImplicito = true;
+			 	}
+			 	
+			 	if(castImplicito)
+			 	{
+			 		string tempVar = createvar();
+			 		$$.traducao = $3.traducao + "\n\t" + tempVar + " = (" + tipoAtual + ") " + $3.label + ";\n\t"
+			 		+ varDeclarada->label + " = " + varDeclarada->label + " * " + tempVar + ";\n";
+			 	}
+			 	else
+			 	{
+			 		string tempVar = createvar();
+		 			$$.traducao = $3.traducao + "\n\t" + tempVar + " = " + $3.label + ";\n\t" 
+		 			+ varDeclarada->label + " = " + varDeclarada->label + " * " + tempVar + ";\n";
+			 	}
+			}
+			| TK_ID TK_DIV_COMPOSTO E 
+			{
+				$$.label = createvar();
+				bool castImplicito = false;
+
+		  		if(varNoEscopo($1.label) == false) 
+		  			yyerror("Variável '" + $1.label + "' não declarada no bloco.");
+
+		  		atributos* varDeclarada = getVarNoEscopo($1.label);
+		  		string tipoAtual = varDeclarada->tipo;
+
+		  		tipo_cast cast = cast_possivel(varDeclarada->tipo, $3.tipo, "=");
+
+		  		//TODO:Fazer cast implicito se possivel
+		  		if(varDeclarada->tipo != $3.tipo && cast.resultado == "")
+		  			yyerror("Variavel '" + $1.label +"' do tipo " + varDeclarada->tipo + " imcompativel com o tipo " + $3.tipo);
+			 	
+			 	if(cast.resultado != varDeclarada->tipo && varDeclarada->tipo != "string")
+			 	{
+		 			tipoAtual = cast.resultado;
+		 			castImplicito = true;
+			 	}
+			 	
+			 	if(castImplicito)
+			 	{
+			 		string tempVar = createvar();
+			 		$$.traducao = $3.traducao + "\n\t" + tempVar + " = (" + tipoAtual + ") " + $3.label + ";\n\t"
+			 		+ varDeclarada->label + " = " + varDeclarada->label + " / " + tempVar + ";\n";
+			 	}
+			 	else
+			 	{
+			 		string tempVar = createvar();
+		 			$$.traducao = $3.traducao + "\n\t" + tempVar + " = " + $3.label + ";\n\t" 
+		 			+ varDeclarada->label + " = " + varDeclarada->label + " / " + tempVar + ";\n";
+			 	}
 			}
 			| TK_ID TK_EQ CAST
 			;

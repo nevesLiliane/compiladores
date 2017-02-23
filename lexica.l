@@ -69,6 +69,10 @@ STRING 		\'{DELIM}*{CARACTERE}+({DELIM}*{CARACTERE}+)*{DELIM}*\'|\"{DELIM}*{CARA
 
 "++"		{ return TK_MAIS_MAIS; }
 "--"		{ return TK_MENOS_MENOS; }
+"+="		{ return TK_MAIS_COMPOSTO; }
+"-="		{ return TK_MENOS_COMPOSTO; }
+"*="		{ return TK_MULT_COMPOSTO; }
+"/="		{ return TK_DIV_COMPOSTO; }
 
 {NUM}		{ yylval.traducao = yytext; return TK_NUM; }
 {ID}		{ yylval.label = yytext; return TK_ID; }

@@ -22,6 +22,10 @@ int main()
 
 				if(a < 33333)
 				{
+					B += 23 + 24 + a;
+					B -= 23 + 24 + a;
+					B *= 23 + 24 + a;
+					B /= 23 + 24 + a;
 					variavelEscopoGlobal = 90;
 					a = a++ + --a;
 					a++;

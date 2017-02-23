@@ -85,10 +85,14 @@ extern int yydebug;
     TK_ELIF = 295,
     TK_MAIS_MAIS = 296,
     TK_MENOS_MENOS = 297,
-    TK_PLUS = 298,
-    TK_SUB = 299,
-    TK_MULT = 300,
-    TK_DIV = 301
+    TK_MAIS_COMPOSTO = 298,
+    TK_MENOS_COMPOSTO = 299,
+    TK_MULT_COMPOSTO = 300,
+    TK_DIV_COMPOSTO = 301,
+    TK_PLUS = 302,
+    TK_SUB = 303,
+    TK_MULT = 304,
+    TK_DIV = 305
   };
 #endif
 /* Tokens.  */
@@ -132,10 +136,14 @@ extern int yydebug;
 #define TK_ELIF 295
 #define TK_MAIS_MAIS 296
 #define TK_MENOS_MENOS 297
-#define TK_PLUS 298
-#define TK_SUB 299
-#define TK_MULT 300
-#define TK_DIV 301
+#define TK_MAIS_COMPOSTO 298
+#define TK_MENOS_COMPOSTO 299
+#define TK_MULT_COMPOSTO 300
+#define TK_DIV_COMPOSTO 301
+#define TK_PLUS 302
+#define TK_SUB 303
+#define TK_MULT 304
+#define TK_DIV 305
 
 /* Value type.  */
 #if ! defined YYSTYPE && ! defined YYSTYPE_IS_DECLARED
